@@ -1,93 +1,121 @@
 'use client';
 
-import Image from "next/image";
+import { JSX, useState } from 'react';
+
+type SectionKey = 'home' | 'about' | 'projects' | 'contact';
 
 export default function Home() {
-    const test = () => {
-    console.log("API key is:", process.env.NEXT_PUBLIC_API_KEY);
-    console.log("This is a test function to check environment variables.");
-  };
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [activeSection, setActiveSection] = useState<SectionKey>('home');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <button
-            onClick={test}
-            className="flex px-4 py-2 w-64 bg-green-300 font-bold justify-center text-center p-3 rounded border-2 border-black shadow-custom hover:shadow-none transition-all hover:translate-x-0.5 hover:translate-y-0.5 items-center gap-2"
-            title="Scan Event QR Code"
-            aria-label="Scan Event QR Code"
-          >
-            Test button of the env pass{" "}
-          </button>
+  const sections: Record<SectionKey, JSX.Element> = {
+    home: (
+      <div className="p-6">
+        <h2 className="text-3xl font-bold mb-4">Welcome to My Portfolio</h2>
+        {/* <p className="text-lg text-gray-700">
+          Hello! I&apos;m Artur Burlakin, a Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+        </p> */}
+      </div>
+    ),
+    about: (
+      <div className="p-6">
+        <h2 className="text-3xl font-bold mb-4">About Me</h2>
+        {/* <p className="text-lg text-gray-700">
+          Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+        </p> */}
+      </div>
+    ),
+    projects: (
+      <div className="p-6">
+        <h2 className="text-3xl font-bold mb-4">Projects</h2>
+        <ul className="list-disc list-inside text-lg text-gray-700">
+          {/* <li>Project</li>
+          <li>Project</li>
+          <li>Project</li> */}
+        </ul>
+      </div>
+    ),
+    contact: (
+      <div className="p-6">
+        <h2 className="text-3xl font-bold mb-4">Contact</h2>
+        {/* <p className="text-lg text-gray-700">
+          Email: artur.burlakin@gmail.com
+        </p>
+        <p className="text-lg text-gray-700">LinkedIn</p>
+        <p className="text-lg text-gray-700">GitHub</p> */}
+      </div>
+    ),
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen font-sans">
+      <header className="bg-gray-800 text-white py-6 text-center">
+        <h1 className="text-4xl font-bold tracking-[-0.01em]">
+          Artur Burlakin Portfolio
+        </h1>
+      </header>
+      <div className="flex flex-1 flex-col sm:flex-row">
+        {/* Left Sidebar */}
+        <nav className="bg-gray-100 w-full sm:w-64 p-6 border-r border-gray-200">
+          <ul className="space-y-4">
+            <li>
+              <button
+                onClick={() => setActiveSection('home')}
+                className={`w-full px-4 py-2 text-left rounded ${
+                  activeSection === 'home'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white hover:bg-gray-200'
+                }`}
+              >
+                Home
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActiveSection('about')}
+                className={`w-full px-4 py-2 text-left rounded ${
+                  activeSection === 'about'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white hover:bg-gray-200'
+                }`}
+              >
+                About
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActiveSection('projects')}
+                className={`w-full px-4 py-2 text-left rounded ${
+                  activeSection === 'projects'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white hover:bg-gray-200'
+                }`}
+              >
+                Projects
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => setActiveSection('contact')}
+                className={`w-full px-4 py-2 text-left rounded ${
+                  activeSection === 'contact'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white hover:bg-gray-200'
+                }`}
+              >
+                Contact
+              </button>
+            </li>
+          </ul>
+        </nav>
+        <main className="flex-1 p-6">
+          {sections[activeSection] || sections.home}
+        </main>
+      </div>
+      <footer className="bg-gray-50 border-t border-gray-200 py-6 w-full">
+        <div className="container mx-auto px-4 text-center text-gray-600 text-sm">
+          <p className="mb-1">&copy; 2025 Burlakin</p>
+          <p>by Artur Burlakin</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
       </footer>
     </div>
   );
