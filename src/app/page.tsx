@@ -1,37 +1,80 @@
 'use client';
 
-import { JSX, useState } from 'react';
-import Link  from 'next/link';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-type SectionKey = 'home' | 'about' | 'projects' | 'contact';
+interface PortfolioItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  year: string;
+}
 
 export default function Home() {
-  const [activeSection, setActiveSection] = useState<SectionKey>('home');
+  const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [grouped, setGrouped] = useState<Record<string, PortfolioItem[]>>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const sections: Record<SectionKey, JSX.Element> = {
-    home: (
-      <div className="p-6">
-        <h2 className="text-3xl font-bold mb-4">Welcome to My Portfolio</h2>
-      </div>
-    ),
-    about: (
-      <div className="p-6">
-        <h2 className="text-3xl font-bold mb-4">About Me</h2>
-      </div>
-    ),
-    projects: (
-      <div className="p-6">
-        <h2 className="text-3xl font-bold mb-4">Projects</h2>
-        <ul className="list-disc list-inside text-lg text-gray-700">
-        </ul>
-      </div>
-    ),
-    contact: (
-      <div className="p-6">
-        <h2 className="text-3xl font-bold mb-4">Contact</h2>
-      </div>
-    ),
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const res = await fetch('/api/portfolio');
+        if (!res.ok) {
+          throw new Error('Failed to fetch items');
+        }
+        const data: PortfolioItem[] = await res.json();
+        setItems(data);
+
+        const groupedData = data.reduce((acc, item) => {
+          if (!acc[item.category]) {
+            acc[item.category] = [];
+          }
+          acc[item.category].push(item);
+          return acc;
+        }, {} as Record<string, PortfolioItem[]>);
+
+        Object.keys(groupedData).forEach((cat) => {
+          groupedData[cat].sort((a, b) => {
+            const yearA = parseInt(a.year, 10) || 0;
+            const yearB = parseInt(b.year, 10) || 0;
+            return yearB - yearA;
+          });
+        });
+
+        setGrouped(groupedData);
+        setCategories(Object.keys(groupedData));
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, []);
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(cat)) {
+        newSet.delete(cat);
+      } else {
+        newSet.add(cat);
+      }
+      return newSet;
+    });
   };
+
+  const selectItem = (id: string) => {
+    setSelectedItemId(id);
+  };
+
+  const selectedItem = items.find((item) => item.id === selectedItemId);
 
   return (
     <div className="flex flex-col min-h-screen font-sans">
@@ -44,64 +87,63 @@ export default function Home() {
         <nav className="bg-gray-100 w-full sm:w-64 p-6 border-r border-gray-200">
           <ul className="space-y-4">
             <li>
-              <button
-                onClick={() => setActiveSection('home')}
-                className={`w-full px-4 py-2 text-left rounded ${
-                  activeSection === 'home'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white hover:bg-gray-200'
-                }`}
-              >
-                Home
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setActiveSection('about')}
-                className={`w-full px-4 py-2 text-left rounded ${
-                  activeSection === 'about'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white hover:bg-gray-200'
-                }`}
-              >
-                About
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setActiveSection('projects')}
-                className={`w-full px-4 py-2 text-left rounded ${
-                  activeSection === 'projects'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white hover:bg-gray-200'
-                }`}
-              >
-                Projects
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => setActiveSection('contact')}
-                className={`w-full px-4 py-2 text-left rounded ${
-                  activeSection === 'contact'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white hover:bg-gray-200'
-                }`}
-              >
-                Contact
-              </button>
-            </li>
-            <li>
               <Link href="/admin">
                 <button className="w-full px-4 py-2 text-left rounded bg-gray-500 text-white hover:bg-gray-600">
                   Admin
                 </button>
               </Link>
             </li>
+            <li className="mt-4 font-bold text-lg">Projects Categories</li>
+            {loading ? (
+              <li>Loading categories...</li>
+            ) : error ? (
+              <li className="text-red-500">{error}</li>
+            ) : categories.length === 0 ? (
+              <li>No categories found.</li>
+            ) : (
+              categories.map((cat) => (
+                <li key={cat}>
+                  <button
+                    onClick={() => toggleCategory(cat)}
+                    className="w-full px-4 py-2 text-left rounded bg-white hover:bg-gray-200 flex justify-between items-center"
+                  >
+                    {cat}
+                    <span>{expandedCategories.has(cat) ? '-' : '+'}</span>
+                  </button>
+                  {expandedCategories.has(cat) && (
+                    <ul className="pl-4 space-y-2 mt-2">
+                      {grouped[cat].map((item) => (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => selectItem(item.id)}
+                            className={`w-full text-left px-2 py-1 rounded ${
+                              selectedItemId === item.id
+                                ? 'bg-blue-500 text-white'
+                                : 'hover:bg-gray-200'
+                            }`}
+                          >
+                            {item.title} ({item.year || ''})
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))
+            )}
           </ul>
         </nav>
         <main className="flex-1 p-6">
-          {sections[activeSection] || sections.home}
+          {selectedItem ? (
+            <div>
+              <h2 className="text-3xl font-bold mb-4">{selectedItem.title} ({selectedItem.year || ''})</h2>
+              <p className="text-lg text-gray-700">{selectedItem.description}</p>
+            </div>
+          ) : (
+            <div className="p-6">
+              <h2 className="text-3xl font-bold mb-4">Welcome to Artur Burlakin Portfolio</h2>
+            </div>
+          )}
         </main>
       </div>
       <footer className="bg-gray-50 border-t border-gray-200 py-6 w-full">
