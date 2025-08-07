@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import AdminForm from '../../components/AdminForm';
-import AdminItemList from '../../components/AdminItemList';
 import { PortfolioItem } from '../../components/AdminItemList';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminContent() {
   const [username, setUsername] = useState<string>('');
@@ -11,6 +11,10 @@ export default function AdminContent() {
   const [error, setError] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [grouped, setGrouped] = useState<Record<string, PortfolioItem[]>>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<boolean>(false);
 
   const [newCategory, setNewCategory] = useState<string>('');
@@ -32,19 +36,37 @@ export default function AdminContent() {
 
   const fetchItems = async () => {
     setLoading(true);
-    const res = await fetch('/api/portfolio');
-    if (res.ok) {
-      let data = await res.json();
-      data = data.sort((a: PortfolioItem, b: PortfolioItem) => {
-        const yearA = parseInt(a.year, 10) || 0;
-        const yearB = parseInt(b.year, 10) || 0;
-        return yearB - yearA;
-      });
+    try {
+      const res = await fetch('/api/portfolio');
+      if (!res.ok) {
+        throw new Error('Failed to fetch items');
+      }
+      const data: PortfolioItem[] = await res.json();
       setItems(data);
-    } else {
+
+      const groupedData = data.reduce((acc, item) => {
+        if (!acc[item.category]) {
+          acc[item.category] = [];
+        }
+        acc[item.category].push(item);
+        return acc;
+      }, {} as Record<string, PortfolioItem[]>);
+
+      Object.keys(groupedData).forEach((cat) => {
+        groupedData[cat].sort((a, b) => {
+          const yearA = parseInt(a.year, 10) || 0;
+          const yearB = parseInt(b.year, 10) || 0;
+          return yearB - yearA;
+        });
+      });
+
+      setGrouped(groupedData);
+      setCategories(Object.keys(groupedData));
+    } catch (err) {
       alert('Failed to fetch items');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -90,6 +112,7 @@ export default function AdminContent() {
     if (res.ok) {
       const addedItem = await res.json();
       setItems((prev) => prev.map((item) => (item.id === optimisticItem.id ? addedItem : item)));
+      fetchItems();
     } else {
       setItems((prev) => prev.filter((item) => item.id !== optimisticItem.id));
       alert('Failed to add item');
@@ -119,6 +142,8 @@ export default function AdminContent() {
     if (!res.ok) {
       alert('Failed to edit item');
       fetchItems();
+    } else {
+      fetchItems();
     }
   };
 
@@ -132,7 +157,33 @@ export default function AdminContent() {
     if (!res.ok) {
       alert('Failed to delete item');
       fetchItems();
+    } else {
+      fetchItems();
     }
+  };
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(cat)) {
+        newSet.delete(cat);
+      } else {
+        newSet.add(cat);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleItem = (id: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
   if (isLoggedIn) {
@@ -148,6 +199,7 @@ export default function AdminContent() {
             title={newTitle}
             year={newYear}
             description={newDescription}
+            existingCategories={categories}
             onCategoryChange={setNewCategory}
             onTitleChange={setNewTitle}
             onYearChange={setNewYear}
@@ -155,27 +207,96 @@ export default function AdminContent() {
           />
         </div>
 
-        <h2 className="text-2xl font-bold mb-4">Portfolio Items</h2>
+        <h2 className="text-2xl font-bold mb-4">Portfolio Items by Category</h2>
         {loading ? (
           <p>Loading...</p>
-        ) : items.length === 0 ? (
+        ) : categories.length === 0 ? (
           <p>No items found.</p>
         ) : (
-          <AdminItemList
-            items={items}
-            editingId={editingId}
-            onStartEditing={startEditing}
-            onDelete={handleDelete}
-            editCategory={editCategory}
-            editTitle={editTitle}
-            editYear={editYear}
-            editDescription={editDescription}
-            onEditCategoryChange={setEditCategory}
-            onEditTitleChange={setEditTitle}
-            onEditYearChange={setEditYear}
-            onEditSubmit={handleEditSubmit}
-            onCancelEdit={() => setEditingId(null)}
-          />
+          <ul className="w-full space-y-4">
+            {categories.map((cat) => (
+              <li key={cat}>
+                <button
+                  onClick={() => toggleCategory(cat)}
+                  className="w-full px-4 py-2 text-left rounded bg-gray-200 hover:bg-gray-300 flex justify-between items-center font-bold"
+                >
+                  {cat}
+                  <span>{expandedCategories.has(cat) ? '-' : '+'}</span>
+                </button>
+                <AnimatePresence>
+                  {expandedCategories.has(cat) && (
+                    <motion.ul
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="pl-4 space-y-4 mt-2"
+                    >
+                      {grouped[cat].map((item) => (
+                        <li key={item.id}>
+                          <button
+                            onClick={() => toggleItem(item.id)}
+                            className="w-full px-4 py-2 text-left rounded bg-white hover:bg-gray-200 flex justify-between items-center"
+                          >
+                            {item.title} ({item.year || ''})
+                            <span>{expandedItems.has(item.id) ? '-' : '+'}</span>
+                          </button>
+                          <AnimatePresence>
+                            {expandedItems.has(item.id) && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="p-4 border border-gray-300 rounded-md mt-2"
+                              >
+                                {editingId === item.id ? (
+                                  <AdminForm
+                                    isEdit={true}
+                                    category={editCategory}
+                                    title={editTitle}
+                                    year={editYear}
+                                    description={editDescription}
+                                    existingCategories={categories}
+                                    onCategoryChange={setEditCategory}
+                                    onTitleChange={setEditTitle}
+                                    onYearChange={setEditYear}
+                                    onSubmit={(e, description) => handleEditSubmit(e, item.id, description)}
+                                    onCancel={() => setEditingId(null)}
+                                  />
+                                ) : (
+                                  <>
+                                    <div
+                                      className="text-lg text-gray-700 mb-2"
+                                      dangerouslySetInnerHTML={{ __html: item.description }}
+                                    />
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => startEditing(item)}
+                                        className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </li>
+            ))}
+          </ul>
         )}
 
         <button
@@ -187,6 +308,7 @@ export default function AdminContent() {
       </div>
     );
   }
+
   return (
     <form onSubmit={handleLoginSubmit} className="w-full max-w-md p-8 bg-white rounded shadow-md">
       <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>

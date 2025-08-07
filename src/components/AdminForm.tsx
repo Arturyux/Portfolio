@@ -2,7 +2,9 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { FormEvent } from 'react';
+import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
+import { FormEvent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBold,
@@ -12,6 +14,7 @@ import {
   faListOl,
   faUndo,
   faRedo,
+  faImage,
 } from '@fortawesome/free-solid-svg-icons';
 
 interface AdminFormProps {
@@ -20,6 +23,7 @@ interface AdminFormProps {
   title: string;
   year: string;
   description: string;
+  existingCategories: string[];
   onCategoryChange: (value: string) => void;
   onTitleChange: (value: string) => void;
   onYearChange: (value: string) => void;
@@ -33,14 +37,30 @@ export default function AdminForm({
   title,
   year,
   description,
+  existingCategories,
   onCategoryChange,
   onTitleChange,
   onYearChange,
   onSubmit,
   onCancel,
 }: AdminFormProps) {
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
+  const [isBulletList, setIsBulletList] = useState(false);
+  const [isOrderedList, setIsOrderedList] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryValue, setNewCategoryValue] = useState('');
+
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Underline,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+      }),
+    ],
     content: description,
     immediatelyRender: false,
     editorProps: {
@@ -48,10 +68,57 @@ export default function AdminForm({
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]',
       },
     },
+    onUpdate: ({ editor }) => {
+      setIsBold(editor.isActive('bold'));
+      setIsItalic(editor.isActive('italic'));
+      setIsUnderline(editor.isActive('underline'));
+      setIsBulletList(editor.isActive('bulletList'));
+      setIsOrderedList(editor.isActive('orderedList'));
+    },
   });
 
+  useEffect(() => {
+    if (editor) {
+      const updateStates = () => {
+        setIsBold(editor.isActive('bold'));
+        setIsItalic(editor.isActive('italic'));
+        setIsUnderline(editor.isActive('underline'));
+        setIsBulletList(editor.isActive('bulletList'));
+        setIsOrderedList(editor.isActive('orderedList'));
+      };
+
+      editor.on('selectionUpdate', updateStates);
+      editor.on('transaction', updateStates);
+
+      return () => {
+        editor.off('selectionUpdate', updateStates);
+        editor.off('transaction', updateStates);
+      };
+    }
+  }, [editor]);
+
   const handleSubmit = (e: FormEvent) => {
+    const finalCategory = showNewCategoryInput ? newCategoryValue : category;
+    onCategoryChange(finalCategory);
     onSubmit(e, editor?.getHTML() || '');
+  };
+
+  const addImage = () => {
+    const url = window.prompt('Enter image URL');
+    if (url && editor) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const handleCategorySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === 'new') {
+      setShowNewCategoryInput(true);
+      onCategoryChange('');
+    } else {
+      setShowNewCategoryInput(false);
+      onCategoryChange(value);
+    }
   };
 
   if (!editor) {
@@ -60,14 +127,31 @@ export default function AdminForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-      <input
-        type="text"
-        value={category}
-        onChange={(e) => onCategoryChange(e.target.value)}
-        placeholder="Category"
-        className="px-3 py-2 border border-gray-300 rounded-md"
-        required
-      />
+      <div className="flex flex-col gap-2">
+        <select
+          value={category}
+          onChange={handleCategorySelect}
+          className="px-3 py-2 border border-gray-300 rounded-md"
+        >
+          <option value="">Select Category</option>
+          {existingCategories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+          <option value="new">Add New Category</option>
+        </select>
+        {showNewCategoryInput && (
+          <input
+            type="text"
+            value={newCategoryValue}
+            onChange={(e) => setNewCategoryValue(e.target.value)}
+            placeholder="New Category Name"
+            className="px-3 py-2 border border-gray-300 rounded-md"
+            required
+          />
+        )}
+      </div>
       <input
         type="text"
         value={title}
@@ -84,55 +168,62 @@ export default function AdminForm({
         className="px-3 py-2 border border-gray-300 rounded-md"
         required
       />
-      <div className="flex space-x-2 mb-2">
+      <div className="flex space-x-2 mb-2 flex-wrap">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 rounded ${editor.isActive('bold') ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`p-2 rounded ${isBold ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
         >
-          <FontAwesomeIcon icon={faBold} />
+          <FontAwesomeIcon icon={faBold} className={isBold ? 'text-white' : 'text-gray-800'} />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 rounded ${editor.isActive('italic') ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`p-2 rounded ${isItalic ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
         >
-          <FontAwesomeIcon icon={faItalic} />
+          <FontAwesomeIcon icon={faItalic} className={isItalic ? 'text-white' : 'text-gray-800'} />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-2 rounded ${editor.isActive('underline') ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`p-2 rounded ${isUnderline ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
         >
-          <FontAwesomeIcon icon={faUnderline} />
+          <FontAwesomeIcon icon={faUnderline} className={isUnderline ? 'text-white' : 'text-gray-800'} />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 rounded ${editor.isActive('bulletList') ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`p-2 rounded ${isBulletList ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
         >
-          <FontAwesomeIcon icon={faListUl} />
+          <FontAwesomeIcon icon={faListUl} className={isBulletList ? 'text-white' : 'text-gray-800'} />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 rounded ${editor.isActive('orderedList') ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`p-2 rounded ${isOrderedList ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
         >
-          <FontAwesomeIcon icon={faListOl} />
+          <FontAwesomeIcon icon={faListOl} className={isOrderedList ? 'text-white' : 'text-gray-800'} />
+        </button>
+        <button
+          type="button"
+          onClick={addImage}
+          className="p-2 rounded bg-gray-200 border-2 border-transparent"
+        >
+          <FontAwesomeIcon icon={faImage} className="text-gray-800" />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().undo().run()}
-          className="p-2 rounded bg-gray-200"
+          className="p-2 rounded bg-gray-200 border-2 border-transparent"
         >
-          <FontAwesomeIcon icon={faUndo} />
+          <FontAwesomeIcon icon={faUndo} className="text-gray-800" />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().redo().run()}
-          className="p-2 rounded bg-gray-200"
+          className="p-2 rounded bg-gray-200 border-2 border-transparent"
         >
-          <FontAwesomeIcon icon={faRedo} />
+          <FontAwesomeIcon icon={faRedo} className="text-gray-800" />
         </button>
       </div>
       <EditorContent editor={editor} />

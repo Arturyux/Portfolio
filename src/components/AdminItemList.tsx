@@ -55,8 +55,7 @@ export default function AdminItemList({
                 onTitleChange={onEditTitleChange}
                 onYearChange={onEditYearChange}
                 onSubmit={(e, description) => onEditSubmit(e, item.id, description)}
-                onCancel={onCancelEdit}
-              />
+                onCancel={onCancelEdit} existingCategories={[]}              />
             </div>
           ) : (
             <>
