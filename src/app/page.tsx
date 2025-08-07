@@ -1,15 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-
-interface PortfolioItem {
-  id: string;
-  category: string;
-  title: string;
-  description: string;
-  year: string;
-}
+import Sidebar from '../components/Sidebar';
+import MainContent from '../components/MainContent';
+import { PortfolioItem } from '../components/AdminItemList';
 
 export default function Home() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
@@ -84,67 +78,17 @@ export default function Home() {
         </h1>
       </header>
       <div className="flex flex-1 flex-col sm:flex-row">
-        <nav className="bg-gray-100 w-full sm:w-64 p-6 border-r border-gray-200">
-          <ul className="space-y-4">
-            <li>
-              <Link href="/admin">
-                <button className="w-full px-4 py-2 text-left rounded bg-gray-500 text-white hover:bg-gray-600">
-                  Admin
-                </button>
-              </Link>
-            </li>
-            <li className="mt-4 font-bold text-lg">Projects Categories</li>
-            {loading ? (
-              <li>Loading categories...</li>
-            ) : error ? (
-              <li className="text-red-500">{error}</li>
-            ) : categories.length === 0 ? (
-              <li>No categories found.</li>
-            ) : (
-              categories.map((cat) => (
-                <li key={cat}>
-                  <button
-                    onClick={() => toggleCategory(cat)}
-                    className="w-full px-4 py-2 text-left rounded bg-white hover:bg-gray-200 flex justify-between items-center"
-                  >
-                    {cat}
-                    <span>{expandedCategories.has(cat) ? '-' : '+'}</span>
-                  </button>
-                  {expandedCategories.has(cat) && (
-                    <ul className="pl-4 space-y-2 mt-2">
-                      {grouped[cat].map((item) => (
-                        <li key={item.id}>
-                          <button
-                            onClick={() => selectItem(item.id)}
-                            className={`w-full text-left px-2 py-1 rounded ${
-                              selectedItemId === item.id
-                                ? 'bg-blue-500 text-white'
-                                : 'hover:bg-gray-200'
-                            }`}
-                          >
-                            {item.title} ({item.year || ''})
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
-        </nav>
-        <main className="flex-1 p-6">
-          {selectedItem ? (
-            <div>
-              <h2 className="text-3xl font-bold mb-4">{selectedItem.title} ({selectedItem.year || ''})</h2>
-              <p className="text-lg text-gray-700">{selectedItem.description}</p>
-            </div>
-          ) : (
-            <div className="p-6">
-              <h2 className="text-3xl font-bold mb-4">Welcome to Artur Burlakin Portfolio</h2>
-            </div>
-          )}
-        </main>
+        <Sidebar
+          grouped={grouped}
+          categories={categories}
+          expandedCategories={expandedCategories}
+          selectedItemId={selectedItemId}
+          loading={loading}
+          error={error}
+          onToggleCategory={toggleCategory}
+          onSelectItem={selectItem}
+        />
+        <MainContent selectedItem={selectedItem} />
       </div>
       <footer className="bg-gray-50 border-t border-gray-200 py-6 w-full">
         <div className="container mx-auto px-4 text-center text-gray-600 text-sm">
