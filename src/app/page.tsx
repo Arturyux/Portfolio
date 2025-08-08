@@ -6,49 +6,35 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface PortfolioItem {
   id: string;
-  category: string;
   title: string;
   description: string;
   year: string;
 }
 
+interface CategoryData {
+  generalInfo: string;
+  projects: PortfolioItem[];
+}
+
 export default function Home() {
-  const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [grouped, setGrouped] = useState<Record<string, PortfolioItem[]>>({});
+  const [data, setData] = useState<Record<string, CategoryData>>({});
   const [categories, setCategories] = useState<string[]>([]);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchItems = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch('/api/portfolio');
         if (!res.ok) {
-          throw new Error('Failed to fetch items');
+          throw new Error('Failed to fetch data');
         }
-        const data: PortfolioItem[] = await res.json();
-        setItems(data);
-
-        const groupedData = data.reduce((acc, item) => {
-          if (!acc[item.category]) {
-            acc[item.category] = [];
-          }
-          acc[item.category].push(item);
-          return acc;
-        }, {} as Record<string, PortfolioItem[]>);
-
-        Object.keys(groupedData).forEach((cat) => {
-          groupedData[cat].sort((a, b) => {
-            const yearA = parseInt(a.year, 10) || 0;
-            const yearB = parseInt(b.year, 10) || 0;
-            return yearB - yearA;
-          });
-        });
-
-        setGrouped(groupedData);
-        setCategories(Object.keys(groupedData));
+        const fetchedData = await res.json();
+        setData(fetchedData);
+        setCategories(Object.keys(fetchedData));
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -56,31 +42,94 @@ export default function Home() {
       }
     };
 
-    fetchItems();
+    fetchData();
   }, []);
 
   const toggleCategory = (cat: string) => {
-    setExpandedCategories((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(cat)) {
-        newSet.delete(cat);
-      } else {
-        newSet.add(cat);
-      }
-      return newSet;
-    });
+    if (expandedCategory === cat) {
+      setExpandedCategory(null);
+      setSelectedCategory(null);
+    } else {
+      setExpandedCategory(cat);
+      setSelectedCategory(cat);
+    }
+    setSelectedItemId(null);
   };
 
-  const selectItem = (id: string) => {
+  const selectItem = (id: string, cat: string) => {
     setSelectedItemId(id);
+    setSelectedCategory(cat);
   };
 
-  const selectedItem = items.find((item) => item.id === selectedItemId);
+  const renderMainContent = () => {
+    if (selectedItemId && selectedCategory && data[selectedCategory]) {
+      const selectedItem = data[selectedCategory].projects.find((item) => item.id === selectedItemId);
+      if (selectedItem) {
+        return (
+          <motion.div
+            key={selectedItem.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">{selectedItem.title} ({selectedItem.year || ''})</h2>
+            <div
+              className="text-lg text-gray-700 prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: selectedItem.description }}
+            />
+          </motion.div>
+        );
+      }
+    }
+
+    if (selectedCategory && data[selectedCategory]) {
+      return (
+        <motion.div
+          key={`general-${selectedCategory}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <h2 className="text-3xl font-bold mb-4 text-gray-800">General Information for {selectedCategory}</h2>
+          <div
+            className="text-lg text-gray-700 prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: data[selectedCategory].generalInfo }}
+          />
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div
+        key="welcome"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col items-center justify-center h-full text-center"
+      >
+        <img
+          src="/placeholder-dog.png"
+          alt="Berry is resting"
+          className="w-32 h-32 mb-4 rounded-full"
+        />
+        <h2 className="text-3xl font-bold mb-2 text-gray-800">Welcome to Artur Burlakin Portfolio</h2>
+        <p className="text-gray-600">Select a category or project from the left to view details.</p>
+      </motion.div>
+    );
+  };
 
   return (
-    <div className="flex flex-col mt-10 min-h-screen font-sans bg-gradient-to-b from-gray-50 to-white">
+    <div className="flex flex-col min-h-screen font-sans bg-gradient-to-b from-gray-50 to-white">
+      <header className="bg-white py-6 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-800">
+          Artur Burlakin Portfolio
+        </h1>
+      </header>
       <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full">
-        <nav className="bg-white w-full md:w-80 p-6  md:border-r border-gray-200 overflow-y-auto">
+        <nav className="bg-white w-full md:w-80 p-6 md:border-r border-gray-200 overflow-y-auto">
           <ul className="space-y-2">
             <li>
               <Link href="/admin">
@@ -104,10 +153,10 @@ export default function Home() {
                     className="w-full px-4 py-3 text-left rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors flex justify-between items-center font-medium text-gray-800"
                   >
                     {cat}
-                    <span className="text-gray-600">{expandedCategories.has(cat) ? '-' : '+'}</span>
+                    <span className="text-gray-600">{expandedCategory === cat ? '-' : '+'}</span>
                   </button>
                   <AnimatePresence>
-                    {expandedCategories.has(cat) && (
+                    {expandedCategory === cat && (
                       <motion.ul
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -115,12 +164,12 @@ export default function Home() {
                         transition={{ duration: 0.3 }}
                         className="pl-4 space-y-1 mt-1"
                       >
-                        {grouped[cat].map((item) => (
+                        {data[cat].projects.map((item) => (
                           <li key={item.id}>
                             <button
-                              onClick={() => selectItem(item.id)}
+                              onClick={() => selectItem(item.id, cat)}
                               className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                                selectedItemId === item.id
+                                selectedItemId === item.id && selectedCategory === cat
                                   ? 'bg-blue-100 text-blue-800 font-medium'
                                   : 'hover:bg-gray-100 text-gray-700'
                               }`}
@@ -139,38 +188,7 @@ export default function Home() {
         </nav>
         <main className="flex-1 p-6 md:p-8 bg-white">
           <AnimatePresence mode="wait">
-            {selectedItem ? (
-              <motion.div
-                key={selectedItem.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-3xl font-bold mb-4 text-gray-800">{selectedItem.title} ({selectedItem.year || ''})</h2>
-                <div
-                  className="text-lg text-gray-700 prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedItem.description }}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="welcome"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col items-center justify-center h-full text-center"
-              >
-                <img
-                  src="https://img.goodfon.com/wallpaper/nbig/0/84/belaia-shveitsarskaia-ovcharka-sobaka-morda-tsvety-lavanda.webp"
-                  alt="Berry is resting"
-                  className="w-32 h-32 mb-4 rounded-full"
-                />
-                <h2 className="text-3xl font-bold mb-2 text-gray-800">Welcome to Artur Burlakin Portfolio</h2>
-                <p className="text-gray-600">Select a project from the left to view details.</p>
-              </motion.div>
-            )}
+            {renderMainContent()}
           </AnimatePresence>
         </main>
       </div>

@@ -10,11 +10,12 @@ export default function AdminContent() {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [grouped, setGrouped] = useState<Record<string, PortfolioItem[]>>({});
+  const [data, setData] = useState<Record<string, { generalInfo: string; projects: PortfolioItem[] }>>({});
   const [categories, setCategories] = useState<string[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [editingCategoryInfo, setEditingCategoryInfo] = useState<string | null>(null);
+  const [editGeneralInfo, setEditGeneralInfo] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
   const [newCategory, setNewCategory] = useState<string>('');
@@ -30,40 +31,22 @@ export default function AdminContent() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      fetchItems();
+      fetchData();
     }
   }, [isLoggedIn]);
 
-  const fetchItems = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/portfolio');
       if (!res.ok) {
-        throw new Error('Failed to fetch items');
+        throw new Error('Failed to fetch data');
       }
-      const data: PortfolioItem[] = await res.json();
-      setItems(data);
-
-      const groupedData = data.reduce((acc, item) => {
-        if (!acc[item.category]) {
-          acc[item.category] = [];
-        }
-        acc[item.category].push(item);
-        return acc;
-      }, {} as Record<string, PortfolioItem[]>);
-
-      Object.keys(groupedData).forEach((cat) => {
-        groupedData[cat].sort((a, b) => {
-          const yearA = parseInt(a.year, 10) || 0;
-          const yearB = parseInt(b.year, 10) || 0;
-          return yearB - yearA;
-        });
-      });
-
-      setGrouped(groupedData);
-      setCategories(Object.keys(groupedData));
+      const fetchedData = await res.json();
+      setData(fetchedData);
+      setCategories(Object.keys(fetchedData));
     } catch (err) {
-      alert('Failed to fetch items');
+      alert('Failed to fetch data');
     } finally {
       setLoading(false);
     }
@@ -90,19 +73,10 @@ export default function AdminContent() {
 
   const handleAddSubmit = async (e: React.FormEvent, description: string) => {
     e.preventDefault();
-    const optimisticItem = {
-      id: 'temp-' + Date.now(),
-      category: newCategory,
-      title: newTitle,
-      description,
-      year: newYear,
-    };
-    setItems((prev) => [optimisticItem, ...prev]);
-    setNewCategory('');
-    setNewTitle('');
-    setNewDescription('');
-    setNewYear('');
-
+    if (!newCategory) {
+      alert('Please select or enter a category');
+      return;
+    }
     const res = await fetch('/api/portfolio', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,18 +84,19 @@ export default function AdminContent() {
     });
 
     if (res.ok) {
-      const addedItem = await res.json();
-      setItems((prev) => prev.map((item) => (item.id === optimisticItem.id ? addedItem : item)));
-      fetchItems();
+      setNewCategory('');
+      setNewTitle('');
+      setNewDescription('');
+      setNewYear('');
+      fetchData();
     } else {
-      setItems((prev) => prev.filter((item) => item.id !== optimisticItem.id));
       alert('Failed to add item');
     }
   };
 
-  const startEditing = (item: PortfolioItem) => {
+  const startEditing = (item: PortfolioItem, category: string) => {
     setEditingId(item.id);
-    setEditCategory(item.category);
+    setEditCategory(category);
     setEditTitle(item.title);
     setEditDescription(item.description);
     setEditYear(item.year || '');
@@ -129,36 +104,61 @@ export default function AdminContent() {
 
   const handleEditSubmit = async (e: React.FormEvent, id: string, description: string) => {
     e.preventDefault();
-    const optimisticItem = { id, category: editCategory, title: editTitle, description, year: editYear };
-    setItems((prev) => prev.map((item) => (item.id === id ? optimisticItem : item)));
-    setEditingId(null);
-
     const res = await fetch(`/api/portfolio?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ category: editCategory, title: editTitle, description, year: editYear }),
     });
 
-    if (!res.ok) {
-      alert('Failed to edit item');
-      fetchItems();
+    if (res.ok) {
+      setEditingId(null);
+      fetchData();
     } else {
-      fetchItems();
+      alert('Failed to edit item');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+  const handleDelete = async (id: string, category: string) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
 
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    const res = await fetch(`/api/portfolio?id=${id}&category=${category}`, { method: 'DELETE' });
 
-    const res = await fetch(`/api/portfolio?id=${id}`, { method: 'DELETE' });
-
-    if (!res.ok) {
-      alert('Failed to delete item');
-      fetchItems();
+    if (res.ok) {
+      fetchData();
     } else {
-      fetchItems();
+      alert('Failed to delete project');
+    }
+  };
+
+  const handleDeleteCategory = async (cat: string) => {
+    if (!confirm('Are you sure you want to delete this category and all its projects?')) return;
+
+    const res = await fetch(`/api/portfolio?category=${cat}`, { method: 'DELETE' });
+
+    if (res.ok) {
+      fetchData();
+    } else {
+      alert('Failed to delete category');
+    }
+  };
+
+  const startEditingCategoryInfo = (cat: string) => {
+    setEditingCategoryInfo(cat);
+    setEditGeneralInfo(data[cat].generalInfo);
+  };
+
+  const handleCategoryInfoSubmit = async (cat: string) => {
+    const res = await fetch('/api/portfolio?type=generalInfo', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: cat, generalInfo: editGeneralInfo }),
+    });
+
+    if (res.ok) {
+      setEditingCategoryInfo(null);
+      fetchData();
+    } else {
+      alert('Failed to update general info');
     }
   };
 
@@ -216,13 +216,21 @@ export default function AdminContent() {
           <ul className="w-full space-y-4">
             {categories.map((cat) => (
               <li key={cat}>
-                <button
-                  onClick={() => toggleCategory(cat)}
-                  className="w-full px-4 py-2 text-left rounded bg-gray-200 hover:bg-gray-300 flex justify-between items-center font-bold"
-                >
-                  {cat}
-                  <span>{expandedCategories.has(cat) ? '-' : '+'}</span>
-                </button>
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => toggleCategory(cat)}
+                    className="flex-1 px-4 py-2 text-left rounded bg-gray-200 hover:bg-gray-300 flex justify-between items-center font-bold"
+                  >
+                    {cat}
+                    <span>{expandedCategories.has(cat) ? '-' : '+'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(cat)}
+                    className="ml-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                  >
+                    Delete Category
+                  </button>
+                </div>
                 <AnimatePresence>
                   {expandedCategories.has(cat) && (
                     <motion.ul
@@ -232,63 +240,84 @@ export default function AdminContent() {
                       transition={{ duration: 0.3 }}
                       className="pl-4 space-y-4 mt-2"
                     >
-                      {grouped[cat].map((item) => (
-                        <li key={item.id}>
-                          <button
-                            onClick={() => toggleItem(item.id)}
-                            className="w-full px-4 py-2 text-left rounded bg-white hover:bg-gray-200 flex justify-between items-center"
-                          >
-                            {item.title} ({item.year || ''})
-                            <span>{expandedItems.has(item.id) ? '-' : '+'}</span>
-                          </button>
-                          <AnimatePresence>
-                            {expandedItems.has(item.id) && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="p-4 border border-gray-300 rounded-md mt-2"
+                      {/* General Info */}
+                      <div className="p-4 border border-gray-300 rounded-md">
+                        <h3 className="font-semibold mb-2">General Information</h3>
+                        {editingCategoryInfo === cat ? (
+                          <div>
+                            <textarea
+                              value={editGeneralInfo}
+                              onChange={(e) => setEditGeneralInfo(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-md min-h-[100px]"
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => handleCategoryInfoSubmit(cat)}
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                               >
-                                {editingId === item.id ? (
-                                  <AdminForm
-                                    isEdit={true}
-                                    category={editCategory}
-                                    title={editTitle}
-                                    year={editYear}
-                                    description={editDescription}
-                                    existingCategories={categories}
-                                    onCategoryChange={setEditCategory}
-                                    onTitleChange={setEditTitle}
-                                    onYearChange={setEditYear}
-                                    onSubmit={(e, description) => handleEditSubmit(e, item.id, description)}
-                                    onCancel={() => setEditingId(null)}
-                                  />
-                                ) : (
-                                  <>
-                                    <div
-                                      className="text-lg text-gray-700 mb-2"
-                                      dangerouslySetInnerHTML={{ __html: item.description }}
-                                    />
-                                    <div className="flex gap-2">
-                                      <button
-                                        onClick={() => startEditing(item)}
-                                        className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </>
-                                )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingCategoryInfo(null)}
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-gray-700 mb-2">{data[cat].generalInfo || 'No general info set.'}</p>
+                            <button
+                              onClick={() => startEditingCategoryInfo(cat)}
+                              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                            >
+                              Edit General Info
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Projects */}
+                      {data[cat].projects.map((item) => (
+                        <li key={item.id} className="p-4 border border-gray-300 rounded-md">
+                          {editingId === item.id ? (
+                            <AdminForm
+                              isEdit={true}
+                              category={editCategory}
+                              title={editTitle}
+                              year={editYear}
+                              description={editDescription}
+                              existingCategories={categories}
+                              onCategoryChange={setEditCategory}
+                              onTitleChange={setEditTitle}
+                              onYearChange={setEditYear}
+                              onSubmit={(e, description) => handleEditSubmit(e, item.id, description)}
+                              onCancel={() => setEditingId(null)}
+                            />
+                          ) : (
+                            <>
+                              <p><strong>Title:</strong> {item.title} ({item.year || ''})</p>
+                              <div
+                                className="text-lg text-gray-700 mb-2"
+                                dangerouslySetInnerHTML={{ __html: item.description }}
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => startEditing(item, cat)}
+                                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(item.id, cat)}
+                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </li>
                       ))}
                     </motion.ul>
