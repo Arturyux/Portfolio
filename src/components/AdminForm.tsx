@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Underline from '@tiptap/extension-underline';
-import { FormEvent, useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import Underline from "@tiptap/extension-underline";
+import { FormEvent, useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBold,
   faItalic,
@@ -15,7 +15,7 @@ import {
   faUndo,
   faRedo,
   faImage,
-} from '@fortawesome/free-solid-svg-icons';
+} from "@fortawesome/free-solid-svg-icons";
 
 interface AdminFormProps {
   isEdit: boolean;
@@ -50,61 +50,64 @@ export default function AdminForm({
   const [isBulletList, setIsBulletList] = useState(false);
   const [isOrderedList, setIsOrderedList] = useState(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [newCategoryValue, setNewCategoryValue] = useState('');
+  const [newCategoryValue, setNewCategoryValue] = useState("");
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
+      Image.configure({ inline: true, allowBase64: true }),
     ],
     content: description,
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]',
+        class:
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]",
       },
     },
     onUpdate: ({ editor }) => {
-      setIsBold(editor.isActive('bold'));
-      setIsItalic(editor.isActive('italic'));
-      setIsUnderline(editor.isActive('underline'));
-      setIsBulletList(editor.isActive('bulletList'));
-      setIsOrderedList(editor.isActive('orderedList'));
+      setIsBold(editor.isActive("bold"));
+      setIsItalic(editor.isActive("italic"));
+      setIsUnderline(editor.isActive("underline"));
+      setIsBulletList(editor.isActive("bulletList"));
+      setIsOrderedList(editor.isActive("orderedList"));
     },
   });
 
   useEffect(() => {
     if (editor) {
       const updateStates = () => {
-        setIsBold(editor.isActive('bold'));
-        setIsItalic(editor.isActive('italic'));
-        setIsUnderline(editor.isActive('underline'));
-        setIsBulletList(editor.isActive('bulletList'));
-        setIsOrderedList(editor.isActive('orderedList'));
+        setIsBold(editor.isActive("bold"));
+        setIsItalic(editor.isActive("italic"));
+        setIsUnderline(editor.isActive("underline"));
+        setIsBulletList(editor.isActive("bulletList"));
+        setIsOrderedList(editor.isActive("orderedList"));
       };
 
-      editor.on('selectionUpdate', updateStates);
-      editor.on('transaction', updateStates);
+      editor.on("selectionUpdate", updateStates);
+      editor.on("transaction", updateStates);
 
       return () => {
-        editor.off('selectionUpdate', updateStates);
-        editor.off('transaction', updateStates);
+        editor.off("selectionUpdate", updateStates);
+        editor.off("transaction", updateStates);
       };
     }
   }, [editor]);
 
   const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
     const finalCategory = showNewCategoryInput ? newCategoryValue : category;
+    if (!finalCategory) {
+      alert("Please select or enter a category");
+      return;
+    }
     onCategoryChange(finalCategory);
-    onSubmit(e, editor?.getHTML() || '');
+    onSubmit(e, editor?.getHTML() || "");
   };
 
   const addImage = () => {
-    const url = window.prompt('Enter image URL');
+    const url = window.prompt("Enter image URL");
     if (url && editor) {
       editor.chain().focus().setImage({ src: url }).run();
     }
@@ -112,18 +115,16 @@ export default function AdminForm({
 
   const handleCategorySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === 'new') {
+    if (value === "new") {
       setShowNewCategoryInput(true);
-      onCategoryChange('');
+      onCategoryChange("");
     } else {
       setShowNewCategoryInput(false);
       onCategoryChange(value);
     }
   };
 
-  if (!editor) {
-    return null;
-  }
+  if (!editor) return null;
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
@@ -172,37 +173,72 @@ export default function AdminForm({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 rounded ${isBold ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
+          className={`p-2 rounded ${
+            isBold
+              ? "bg-blue-500 text-white border-2 border-blue-700"
+              : "bg-gray-200 border-2 border-transparent"
+          }`}
         >
-          <FontAwesomeIcon icon={faBold} className={isBold ? 'text-white' : 'text-gray-800'} />
+          <FontAwesomeIcon
+            icon={faBold}
+            className={isBold ? "text-white" : "text-gray-800"}
+          />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 rounded ${isItalic ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
+          className={`p-2 rounded ${
+            isItalic
+              ? "bg-blue-500 text-white border-2 border-blue-700"
+              : "bg-gray-200 border-2 border-transparent"
+          }`}
         >
-          <FontAwesomeIcon icon={faItalic} className={isItalic ? 'text-white' : 'text-gray-800'} />
+          <FontAwesomeIcon
+            icon={faItalic}
+            className={isItalic ? "text-white" : "text-gray-800"}
+          />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`p-2 rounded ${isUnderline ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
+          className={`p-2 rounded ${
+            isUnderline
+              ? "bg-blue-500 text-white border-2 border-blue-700"
+              : "bg-gray-200 border-2 border-transparent"
+          }`}
         >
-          <FontAwesomeIcon icon={faUnderline} className={isUnderline ? 'text-white' : 'text-gray-800'} />
+          <FontAwesomeIcon
+            icon={faUnderline}
+            className={isUnderline ? "text-white" : "text-gray-800"}
+          />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 rounded ${isBulletList ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
+          className={`p-2 rounded ${
+            isBulletList
+              ? "bg-blue-500 text-white border-2 border-blue-700"
+              : "bg-gray-200 border-2 border-transparent"
+          }`}
         >
-          <FontAwesomeIcon icon={faListUl} className={isBulletList ? 'text-white' : 'text-gray-800'} />
+          <FontAwesomeIcon
+            icon={faListUl}
+            className={isBulletList ? "text-white" : "text-gray-800"}
+          />
         </button>
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 rounded ${isOrderedList ? 'bg-blue-500 text-white border-2 border-blue-700' : 'bg-gray-200 border-2 border-transparent'}`}
+          className={`p-2 rounded ${
+            isOrderedList
+              ? "bg-blue-500 text-white border-2 border-blue-700"
+              : "bg-gray-200 border-2 border-transparent"
+          }`}
         >
-          <FontAwesomeIcon icon={faListOl} className={isOrderedList ? 'text-white' : 'text-gray-800'} />
+          <FontAwesomeIcon
+            icon={faListOl}
+            className={isOrderedList ? "text-white" : "text-gray-800"}
+          />
         </button>
         <button
           type="button"
@@ -228,8 +264,11 @@ export default function AdminForm({
       </div>
       <EditorContent editor={editor} />
       <div className="flex gap-2">
-        <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          {isEdit ? 'Save' : 'Add Item'}
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {isEdit ? "Save" : "Add Item"}
         </button>
         {isEdit && onCancel && (
           <button

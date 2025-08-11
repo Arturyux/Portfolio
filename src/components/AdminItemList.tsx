@@ -1,4 +1,4 @@
-import AdminForm from './AdminForm';
+import AdminForm from "./AdminForm";
 
 export interface PortfolioItem {
   id: string;
@@ -11,12 +11,13 @@ export interface PortfolioItem {
 interface AdminItemListProps {
   items: PortfolioItem[];
   editingId: string | null;
-  onStartEditing: (item: PortfolioItem) => void;
-  onDelete: (id: string) => void;
+  existingCategories: string[];
   editCategory: string;
   editTitle: string;
   editYear: string;
   editDescription: string;
+  onStartEditing: (item: PortfolioItem) => void;
+  onDelete: (id: string) => void;
   onEditCategoryChange: (value: string) => void;
   onEditTitleChange: (value: string) => void;
   onEditYearChange: (value: string) => void;
@@ -27,12 +28,13 @@ interface AdminItemListProps {
 export default function AdminItemList({
   items,
   editingId,
-  onStartEditing,
-  onDelete,
+  existingCategories,
   editCategory,
   editTitle,
   editYear,
   editDescription,
+  onStartEditing,
+  onDelete,
   onEditCategoryChange,
   onEditTitleChange,
   onEditYearChange,
@@ -44,24 +46,30 @@ export default function AdminItemList({
       {items.map((item) => (
         <li key={item.id} className="p-4 border border-gray-300 rounded-md">
           {editingId === item.id ? (
-            <div key={`edit-${item.id}`}>
-              <AdminForm
-                isEdit={true}
-                category={editCategory}
-                title={editTitle}
-                year={editYear}
-                description={editDescription}
-                onCategoryChange={onEditCategoryChange}
-                onTitleChange={onEditTitleChange}
-                onYearChange={onEditYearChange}
-                onSubmit={(e, description) => onEditSubmit(e, item.id, description)}
-                onCancel={onCancelEdit} existingCategories={[]}              />
-            </div>
+            <AdminForm
+              isEdit={true}
+              category={editCategory}
+              title={editTitle}
+              year={editYear}
+              description={editDescription}
+              existingCategories={existingCategories}
+              onCategoryChange={onEditCategoryChange}
+              onTitleChange={onEditTitleChange}
+              onYearChange={onEditYearChange}
+              onSubmit={(e, description) => onEditSubmit(e, item.id, description)}
+              onCancel={onCancelEdit}
+            />
           ) : (
             <>
-              <p><strong>Category:</strong> {item.category}</p>
-              <p><strong>Title:</strong> {item.title}</p>
-              <p><strong>Year:</strong> {item.year}</p>
+              <p>
+                <strong>Category:</strong> {item.category}
+              </p>
+              <p>
+                <strong>Title:</strong> {item.title}
+              </p>
+              <p>
+                <strong>Year:</strong> {item.year}
+              </p>
               <div
                 className="text-lg text-gray-700"
                 dangerouslySetInnerHTML={{ __html: item.description }}
