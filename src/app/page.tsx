@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faLanguage, faLink, faCode } from '@fortawesome/free-solid-svg-icons';
 
 interface PortfolioItem {
   id: string;
@@ -16,28 +18,63 @@ interface CategoryData {
   projects: PortfolioItem[];
 }
 
+interface LanguageItem {
+  lang: string;
+  level: number;
+  skills: string;
+}
+
+interface ProgrammingItem {
+  lang: string;
+  level: number;
+  skills: string;
+}
+
+interface ProfileData {
+  name: string;
+  bio: string;
+  avatar: string;
+  socials: { platform: string; url: string }[];
+  languages: LanguageItem[];
+  programming: ProgrammingItem[];
+}
+
 export default function Home() {
   const [data, setData] = useState<Record<string, CategoryData>>({});
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<string | null>(null);
-  const [categoryScales, setCategoryScales] = useState<Record<string, number>>({});
-  const [projectScales, setProjectScales] = useState<Record<string, number>>({});
+  const [categoryScales, setCategoryScales] = useState<Record<string, number>>(
+    {}
+  );
+  const [projectScales, setProjectScales] = useState<Record<string, number>>(
+    {}
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const res = await fetch('/api/portfolio');
-        if (!res.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const fetchedData = await res.json();
-        setData(fetchedData);
-        setCategories(Object.keys(fetchedData));
+        const [portfolioRes, profileRes] = await Promise.all([
+          fetch("/api/portfolio"),
+          fetch("/api/profile"),
+        ]);
+
+        if (!portfolioRes.ok) throw new Error("Failed to fetch portfolio");
+        if (!profileRes.ok) throw new Error("Failed to fetch profile");
+
+        const portfolioData = await portfolioRes.json();
+        const profileData = await profileRes.json();
+
+        setData(portfolioData);
+        setCategories(Object.keys(portfolioData));
+        setProfile(profileData);
+
         const initialCatScales: Record<string, number> = {};
-        Object.keys(fetchedData).forEach((cat) => {
+        Object.keys(portfolioData).forEach((cat) => {
           initialCatScales[cat] = 1;
         });
         setCategoryScales(initialCatScales);
@@ -113,10 +150,10 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <h2 className="text-3xl font-bold mb-4 text-gray-800">
-              {selectedItem.title} ({selectedItem.year || ''})
+              {selectedItem.title} ({selectedItem.year || ""})
             </h2>
             <div
               className="text-lg text-gray-700 prose max-w-none"
@@ -135,7 +172,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <h2 className="text-3xl font-bold mb-4 text-gray-800">
             General Information on {activeCategory}
@@ -151,24 +188,76 @@ export default function Home() {
     }
     return (
       <motion.div
-        key="welcome"
+        key="overview"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex flex-col items-center justify-center h-full text-center"
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="flex flex-col items-center text-center p-4 bg-white rounded-lg shadow-md max-w-md mx-auto"
       >
+        <FontAwesomeIcon icon={faUser} className="text-4xl text-gray-800 mb-4" />
         <img
-          src="/placeholder-dog.png"
-          alt="Berry is resting"
-          className="w-32 h-32 mb-4 rounded-full"
+          src={profile?.avatar || "https://api2.cultureconnection.se/assets/board-pictures-2025/e1ad6be1-3a5e-42ee-87e5-b0ba44f3940e.jpg"}
+          alt={profile?.name || "Artur Burlakin"}
+          className="w-32 h-32 rounded-full mb-4 shadow-lg object-cover"
         />
-        <h2 className="text-3xl font-bold mb-2 text-gray-800">
-          Welcome to Artur Burlakin Portfolio
-        </h2>
-        <p className="text-gray-600">
-          Select a category or project from the left to view details.
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">{profile?.name || "Artur Burlakin"}</h2>
+        <p className="text-gray-600 text-sm mb-4">
+          {profile?.bio || "A versatile, multilingual professional blending culinary expertise with IT innovation."}
         </p>
+        <div className="flex justify-center space-x-4 mb-6 flex-wrap">
+          {profile?.socials?.map((social, index) => (
+            <a
+              key={index}
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-800 hover:text-blue-600 flex items-center mx-2"
+            >
+              <FontAwesomeIcon icon={faLink} className="text-2xl mr-1" /> {social.platform}
+            </a>
+          ))}
+        </div>
+        <div className="w-full max-w-xs mb-6">
+          <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
+            <FontAwesomeIcon icon={faLanguage} className="mr-2" /> Languages
+          </h3>
+          <div className="space-y-4">
+            {(profile?.languages || []).map((item, index) => (
+              <div key={index} className="text-left">
+                <span className="text-sm font-medium text-gray-700">{item.lang}: {item.skills}</span>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                  <motion.div
+                    className="bg-blue-600 h-2.5 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.level}%` }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-full max-w-xs">
+          <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
+            <FontAwesomeIcon icon={faCode} className="mr-2" /> Programming Languages & Technologies
+          </h3>
+          <div className="space-y-4">
+            {(profile?.programming || []).map((item, index) => (
+              <div key={index} className="text-left">
+                <span className="text-sm font-medium text-gray-700">{item.lang}: {item.skills}</span>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                  <motion.div
+                    className="bg-green-600 h-2.5 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.level}%` }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </motion.div>
     );
   };
@@ -183,7 +272,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
                   className="w-full px-4 py-3 text-left rounded-lg bg-white text-gray-800 hover:bg-gray-100 transition-colors font-medium border border-gray-200"
                 >
                   Admin
@@ -198,41 +287,48 @@ export default function Home() {
               <li className="text-gray-500">No categories found.</li>
             ) : (
               categories.map((cat) => (
-                <li key={cat} className={activeCategory === cat ? 'mb-4' : 'mb-2'}>
+                <li
+                  key={cat}
+                  className={activeCategory === cat ? "mb-4" : "mb-2"}
+                >
                   <motion.button
                     onClick={() => toggleCategory(cat)}
                     onMouseEnter={() => handleCategoryHover(cat, true)}
                     onMouseLeave={() => handleCategoryHover(cat, false)}
                     animate={{ scale: categoryScales[cat] || 1 }}
-                    transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    className="w-full flex items-right justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
                   >
                     {cat}
                     <span className="text-gray-600">
-                      {activeCategory === cat ? '-' : '+'}
+                      {activeCategory === cat ? "-" : "+"}
                     </span>
                   </motion.button>
                   <AnimatePresence>
                     {activeCategory === cat && (
                       <motion.ul
                         initial={{ opacity: 0, height: 0, scaleY: 0.9 }}
-                        animate={{ opacity: 1, height: 'auto', scaleY: 1 }}
+                        animate={{ opacity: 1, height: "auto", scaleY: 1 }}
                         exit={{ opacity: 0, height: 0, scaleY: 0.9 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="pl-4 space-y-4 mt-2 origin-top"
                       >
                         {data[cat].projects.map((item) => (
                           <li key={item.id}>
                             <motion.button
                               onClick={() => selectProject(item.id)}
-                              onMouseEnter={() => handleProjectHover(item.id, true)}
-                              onMouseLeave={() => handleProjectHover(item.id, false)}
+                              onMouseEnter={() =>
+                                handleProjectHover(item.id, true)
+                              }
+                              onMouseLeave={() =>
+                                handleProjectHover(item.id, false)
+                              }
                               animate={{ scale: projectScales[item.id] || 1 }}
                               transition={{
                                 duration: 0.2,
-                                ease: 'easeInOut',
+                                ease: "easeInOut",
                               }}
-                              className="w-full flex items-right justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
+                              className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
                             >
                               <span>{item.title}</span>
                               {item.year && <span>({item.year})</span>}
@@ -252,8 +348,21 @@ export default function Home() {
         </main>
       </div>
       <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm">
+        {profile?.socials && (
+          <div className="mt-2">
+            {profile.socials.map((s, i) => (
+              <a
+                key={i}
+                href={s.url}
+                className="mx-2 text-gray-800 hover:underline"
+              >
+                {s.platform}
+              </a>
+            ))}
+          </div>
+        )}
         <div className="max-w-7xl mx-auto px-4">
-          <p className="mb-1">&copy; 2025 Burlakin</p>
+          <p className="mb-1">&copy; 2025 </p>
           <p>by Artur Burlakin</p>
         </div>
       </footer>
