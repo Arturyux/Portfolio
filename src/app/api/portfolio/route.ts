@@ -16,6 +16,9 @@ function writeData(data: Record<string, { generalInfo: string; projects: Array<{
 
 export async function GET(req: NextRequest) {
   const data = readData();
+  Object.keys(data).forEach((cat) => {
+    data[cat].projects.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+  });
   return NextResponse.json(data);
 }
 
