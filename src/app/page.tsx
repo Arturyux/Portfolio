@@ -193,13 +193,12 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-col items-center text-center p-4 bg-white rounded-lg shadow-md max-w-md mx-auto"
+        className="flex flex-col items-center text-center mx-auto"
       >
-        <FontAwesomeIcon icon={faUser} className="text-4xl text-gray-800 mb-4" />
         <img
           src={profile?.avatar || "https://api2.cultureconnection.se/assets/board-pictures-2025/e1ad6be1-3a5e-42ee-87e5-b0ba44f3940e.jpg"}
           alt={profile?.name || "Artur Burlakin"}
-          className="w-32 h-32 rounded-full mb-4 shadow-lg object-cover"
+          className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
         />
         <h2 className="text-2xl font-bold mb-2 text-gray-800">{profile?.name || "Artur Burlakin"}</h2>
         <p className="text-gray-600 text-sm mb-4">
