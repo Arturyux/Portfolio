@@ -575,7 +575,7 @@ export default function AdminContent() {
               <div>
                 <strong>Socials:</strong>
                 <ul>
-                  {profile.socials.map((s, i) => (
+                  {profile?.socials?.map((s, i) => (
                     <li key={i}>
                       {s.platform}: {s.url}
                     </li>
@@ -585,7 +585,7 @@ export default function AdminContent() {
               <div>
                 <strong>Languages:</strong>
                 <ul>
-                  {profile.languages.map((l, i) => (
+                  {profile?.languages?.map((l, i) => (
                     <li key={i}>
                       {l.lang}: {l.skills} (Level: {l.level}%)
                     </li>

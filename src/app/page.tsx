@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faLanguage, faLink, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faLink } from '@fortawesome/free-solid-svg-icons';
+import { faGithub, faLinkedin, faInstagram, faDiscord, faFacebook, faTwitter, faYoutube, faTiktok, faReddit } from '@fortawesome/free-brands-svg-icons';
 
 interface PortfolioItem {
   id: string;
@@ -38,6 +39,18 @@ interface ProfileData {
   languages: LanguageItem[];
   programming: ProgrammingItem[];
 }
+
+const socialIcons: { [key: string]: any } = {
+  github: faGithub,
+  linkedin: faLinkedin,
+  instagram: faInstagram,
+  discord: faDiscord,
+  facebook: faFacebook,
+  twitter: faTwitter,
+  youtube: faYoutube,
+  tiktok: faTiktok,
+  reddit: faReddit,
+};
 
 export default function Home() {
   const [data, setData] = useState<Record<string, CategoryData>>({});
@@ -138,6 +151,10 @@ export default function Home() {
     }
   };
 
+  const getSocialIcon = (platform: string) => {
+    return socialIcons[platform.toLowerCase()] || faLink;
+  };
+
   const renderMainContent = () => {
     if (activeProject && activeCategory && data[activeCategory]) {
       const selectedItem = data[activeCategory].projects.find(
@@ -195,14 +212,14 @@ export default function Home() {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="flex flex-col items-center text-center mx-auto"
       >
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">{profile?.name || "null null"}</h2>
         <img
-          src={profile?.avatar || "https://api2.cultureconnection.se/assets/board-pictures-2025/e1ad6be1-3a5e-42ee-87e5-b0ba44f3940e.jpg"}
-          alt={profile?.name || "Artur Burlakin"}
+          src={profile?.avatar || "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"}
+          alt={profile?.name || "null"}
           className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
         />
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">{profile?.name || "Artur Burlakin"}</h2>
         <p className="text-gray-600 text-sm mb-4">
-          {profile?.bio || "A versatile, multilingual professional blending culinary expertise with IT innovation."}
+          {profile?.bio || "null"}
         </p>
         <div className="flex justify-center space-x-4 mb-6 flex-wrap">
           {profile?.socials?.map((social, index) => (
@@ -213,13 +230,13 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-gray-800 hover:text-blue-600 flex items-center mx-2"
             >
-              <FontAwesomeIcon icon={faLink} className="text-2xl mr-1" /> {social.platform}
+              <FontAwesomeIcon icon={getSocialIcon(social.platform)} className="text-2xl mr-1" /> {social.platform}
             </a>
           ))}
         </div>
         <div className="w-full max-w-xs mb-6">
           <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
-            <FontAwesomeIcon icon={faLanguage} className="mr-2" /> Languages
+             Languages
           </h3>
           <div className="space-y-4">
             {(profile?.languages || []).map((item, index) => (
@@ -239,7 +256,7 @@ export default function Home() {
         </div>
         <div className="w-full max-w-xs">
           <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
-            <FontAwesomeIcon icon={faCode} className="mr-2" /> Programming Languages & Technologies
+             Programming Languages & Technologies
           </h3>
           <div className="space-y-4">
             {(profile?.programming || []).map((item, index) => (
