@@ -3,9 +3,22 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLink } from '@fortawesome/free-solid-svg-icons';
-import { faGithub, faLinkedin, faInstagram, faDiscord, faFacebook, faTwitter, faYoutube, faTiktok, faReddit } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faLink
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  faGithub,
+  faLinkedin,
+  faInstagram,
+  faDiscord,
+  faFacebook,
+  faTwitter,
+  faYoutube,
+  faTiktok,
+  faReddit
+} from "@fortawesome/free-brands-svg-icons";
+import SkillDisplay from "@/components/SkillDisplay";
 
 interface PortfolioItem {
   id: string;
@@ -19,25 +32,25 @@ interface CategoryData {
   projects: PortfolioItem[];
 }
 
-interface LanguageItem {
-  lang: string;
-  level: number;
-  skills: string;
-}
-
-interface ProgrammingItem {
-  lang: string;
-  level: number;
-  skills: string;
-}
-
 interface ProfileData {
   name: string;
   bio: string;
   avatar: string;
   socials: { platform: string; url: string }[];
-  languages: LanguageItem[];
-  programming: ProgrammingItem[];
+  languages: {
+    [language: string]: {
+      reading: number;
+      writing: number;
+      speaking: number;
+      listening: number;
+    };
+  };
+  programming: {
+    [tech: string]: {
+      level: number;
+      skill: string;
+    };
+  };
 }
 
 const socialIcons: { [key: string]: any } = {
@@ -49,7 +62,7 @@ const socialIcons: { [key: string]: any } = {
   twitter: faTwitter,
   youtube: faYoutube,
   tiktok: faTiktok,
-  reddit: faReddit,
+  reddit: faReddit
 };
 
 export default function Home() {
@@ -73,19 +86,15 @@ export default function Home() {
       try {
         const [portfolioRes, profileRes] = await Promise.all([
           fetch("/api/portfolio"),
-          fetch("/api/profile"),
+          fetch("/api/profile")
         ]);
-
         if (!portfolioRes.ok) throw new Error("Failed to fetch portfolio");
         if (!profileRes.ok) throw new Error("Failed to fetch profile");
-
         const portfolioData = await portfolioRes.json();
         const profileData = await profileRes.json();
-
         setData(portfolioData);
         setCategories(Object.keys(portfolioData));
         setProfile(profileData);
-
         const initialCatScales: Record<string, number> = {};
         Object.keys(portfolioData).forEach((cat) => {
           initialCatScales[cat] = 1;
@@ -137,7 +146,7 @@ export default function Home() {
     if (activeCategory !== cat) {
       setCategoryScales((prev) => ({
         ...prev,
-        [cat]: hover ? 1.15 : 1,
+        [cat]: hover ? 1.15 : 1
       }));
     }
   };
@@ -146,7 +155,7 @@ export default function Home() {
     if (activeProject !== id) {
       setProjectScales((prev) => ({
         ...prev,
-        [id]: hover ? 1.15 : 1,
+        [id]: hover ? 1.15 : 1
       }));
     }
   };
@@ -175,7 +184,7 @@ export default function Home() {
             <div
               className="text-lg text-gray-700 prose max-w-none"
               dangerouslySetInnerHTML={{
-                __html: selectedItem.description,
+                __html: selectedItem.description
               }}
             />
           </motion.div>
@@ -197,7 +206,7 @@ export default function Home() {
           <div
             className="text-lg text-gray-700 prose max-w-none"
             dangerouslySetInnerHTML={{
-              __html: data[activeCategory].generalInfo,
+              __html: data[activeCategory].generalInfo
             }}
           />
         </motion.div>
@@ -212,15 +221,18 @@ export default function Home() {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="flex flex-col items-center text-center mx-auto"
       >
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">{profile?.name || "null null"}</h2>
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">
+          {profile?.name || "null null"}
+        </h2>
         <img
-          src={profile?.avatar || "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"}
+          src={
+            profile?.avatar ||
+            "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"
+          }
           alt={profile?.name || "null"}
           className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
         />
-        <p className="text-gray-600 text-sm mb-4">
-          {profile?.bio || "null"}
-        </p>
+        <p className="text-gray-600 text-sm mb-4">{profile?.bio || "null"}</p>
         <div className="flex justify-center space-x-4 mb-6 flex-wrap">
           {profile?.socials?.map((social, index) => (
             <a
@@ -230,50 +242,18 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-gray-800 hover:text-blue-600 flex items-center mx-2"
             >
-              <FontAwesomeIcon icon={getSocialIcon(social.platform)} className="text-2xl mr-1" /> {social.platform}
+              <FontAwesomeIcon
+                icon={getSocialIcon(social.platform)}
+                className="text-2xl mr-1"
+              />{" "}
+              {social.platform}
             </a>
           ))}
         </div>
-        <div className="w-full max-w-xs mb-6">
-          <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
-             Languages
-          </h3>
-          <div className="space-y-4">
-            {(profile?.languages || []).map((item, index) => (
-              <div key={index} className="text-left">
-                <span className="text-sm font-medium text-gray-700">{item.lang}: {item.skills}</span>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                  <motion.div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.level}%` }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="w-full max-w-xs">
-          <h3 className="text-lg font-semibold mb-2 text-gray-800 flex items-center justify-center">
-             Programming Languages & Technologies
-          </h3>
-          <div className="space-y-4">
-            {(profile?.programming || []).map((item, index) => (
-              <div key={index} className="text-left">
-                <span className="text-sm font-medium text-gray-700">{item.lang}: {item.skills}</span>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                  <motion.div
-                    className="bg-green-600 h-2.5 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.level}%` }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SkillDisplay
+          languages={profile?.languages || {}}
+          programming={profile?.programming || {}}
+        />
       </motion.div>
     );
   };
@@ -342,7 +322,7 @@ export default function Home() {
                               animate={{ scale: projectScales[item.id] || 1 }}
                               transition={{
                                 duration: 0.2,
-                                ease: "easeInOut",
+                                ease: "easeInOut"
                               }}
                               className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
                             >
