@@ -90,11 +90,11 @@ export default function SkillDisplay({ languages, programming }: SkillDisplayPro
           {tooltip.text}
         </div>
       )}
-           <div className="p-6">
-        <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-          💻 Programming Languages & Technologies
-        </h3>
-        <div className="grid md:grid-cols-5">
+           <div className="p-2">
+        {/* <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+          Programming Languages & Technologies
+        </h3> */}
+        <div className="grid md:grid-cols-6">
           {Object.entries(programming).map(([tech, { level, skill }], index) => {
             const radius = 50;
             const center = 62.5;
@@ -143,10 +143,16 @@ export default function SkillDisplay({ languages, programming }: SkillDisplayPro
           })}
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-2">
         <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
           🌍 Languages
         </h3>
+        <div className="text-center grid-cols-4 gap-10 mb-4">
+          <span className="text-2xl text-purple-500">■</span> Listining Level{" "}
+          <span className="text-2xl text-blue-500">■</span> Reading Level{" "}
+          <span className="text-2xl text-red-500">■</span> Speaking Level{" "}
+          <span className="text-2xl text-green-500">■</span> Writing Level{" "}
+        </div>
         <div className="grid md:grid-cols-4">
           {Object.entries(languages).map(([lang, skills], index) => {
             const skillEntries = Object.entries(skills);
@@ -203,8 +209,8 @@ export default function SkillDisplay({ languages, programming }: SkillDisplayPro
                   })}
                 </svg>
                 <div className="absolute text-center">
-                  <h4 className="text-sm font-semibold text-gray-800">{lang}</h4>
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                  <h4 className="text-lg font-semibold text-gray-800">{lang}</h4>
+                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">
                     {skillString}
                   </span>
                 </div>

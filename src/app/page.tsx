@@ -35,6 +35,7 @@ interface CategoryData {
 interface ProfileData {
   name: string;
   bio: string;
+  bioshort: string;
   avatar: string;
   socials: { platform: string; url: string }[];
   languages: {
@@ -68,6 +69,7 @@ const socialIcons: { [key: string]: any } = {
 export default function Home() {
   const [data, setData] = useState<Record<string, CategoryData>>({});
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [showFullBio, setShowFullBio] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<string | null>(null);
@@ -232,7 +234,34 @@ export default function Home() {
           alt={profile?.name || "null"}
           className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
         />
-        <p className="text-gray-600 text-sm mb-4">{profile?.bio || "null"}</p>
+          <div className="text-center mb-8">
+            <p className="text-black text-2xl font-semibold mb-2">
+              {profile?.bioshort || "null"}
+            </p>
+            {profile?.bio && profile?.bio !== profile?.bioshort && (
+              <button
+                onClick={() => setShowFullBio((prev) => !prev)}
+                className="text-blue-700 hover:underline mt-2 text-lg font-semibold"
+              >
+                {showFullBio ? "Show less." : "Read more."}
+              </button>
+            )}
+            <AnimatePresence>
+              {showFullBio && (
+                <motion.div
+                  key="full-bio"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: "backInOut" }}
+                  className="mt-4 text-gray-700 text-base max-w-2xl mx-auto"
+                >
+                  <p>{profile?.bio}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
         <div className="flex justify-center space-x-4 mb-6 flex-wrap">
           {profile?.socials?.map((social, index) => (
             <a
@@ -240,7 +269,7 @@ export default function Home() {
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-800 hover:text-blue-600 flex items-center mx-2"
+              className="text-gray-800 hover:text-blue-600 flex text-xl items-center mx-2"
             >
               <FontAwesomeIcon
                 icon={getSocialIcon(social.platform)}
@@ -259,22 +288,10 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col mt-30 mx-50 min-h-screen font-sans bg-gradient-to-b bg-white">
+    <div className="flex flex-col mt-30 mx-50 md:mx-2 md:mt-2 min-h-screen font-sans bg-gradient-to-b bg-white">
       <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full">
         <nav className="bg-white w-full md:w-80 p-6 md:border-r border-gray-200 overflow-y-auto">
-          <ul className="space-y-2">
-            <li>
-              <Link href="/admin">
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "easeInOut" }}
-                  className="w-full px-4 py-3 text-left rounded-lg bg-white text-gray-800 hover:bg-gray-100 transition-colors font-medium border border-gray-200"
-                >
-                  Admin
-                </motion.button>
-              </Link>
-            </li>
+          <ul className="space-y-2 mt-30">
             {loading ? (
               <li className="text-gray-500">Loading categories...</li>
             ) : error ? (
@@ -344,19 +361,6 @@ export default function Home() {
         </main>
       </div>
       <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm">
-        {profile?.socials && (
-          <div className="mt-2">
-            {profile.socials.map((s, i) => (
-              <a
-                key={i}
-                href={s.url}
-                className="mx-2 text-gray-800 hover:underline"
-              >
-                {s.platform}
-              </a>
-            ))}
-          </div>
-        )}
         <div className="max-w-7xl mx-auto px-4">
           <p className="mb-1">&copy; 2025 </p>
           <p>by Artur Burlakin</p>
