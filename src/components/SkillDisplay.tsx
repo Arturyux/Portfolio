@@ -90,16 +90,77 @@ export default function SkillDisplay({ languages, programming }: SkillDisplayPro
           {tooltip.text}
         </div>
       )}
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+           <div className="p-6">
+        <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+          💻 Programming Languages & Technologies
+        </h3>
+        <div className="grid md:grid-cols-5">
+          {Object.entries(programming).map(([tech, { level, skill }], index) => {
+            const radius = 50;
+            const center = 62.5;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (level / 100) * circumference;
+
+            return (
+              <div
+                key={index}
+                className="relative w-[125px] h-[125px] mx-auto flex items-center justify-center"
+              >
+                <svg width="125" height="125">
+                  <circle
+                    cx={center}
+                    cy={center}
+                    r={radius}
+                    stroke="#e5e7eb"
+                    strokeWidth="8"
+                    fill="none"
+                  />
+                  <circle
+                    cx={center}
+                    cy={center}
+                    r={radius}
+                    stroke="#10b981"
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dashoffset 0.5s ease-in-out" }}
+                    onMouseEnter={(e) =>
+                      showTooltip(`${tech} - ${skill}: ${level}%`, e)
+                    }
+                    onMouseLeave={hideTooltip}
+                  />
+                </svg>
+                <div className="absolute text-center">
+                  <h4 className="text-sm font-semibold text-gray-800">{tech}</h4>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                    {skill}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="p-6">
         <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
           🌍 Languages
         </h3>
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid md:grid-cols-4">
           {Object.entries(languages).map(([lang, skills], index) => {
             const skillEntries = Object.entries(skills);
             const avg =
               skillEntries.reduce((sum, [, val]) => sum + val, 0) /
               skillEntries.length;
+
+            const skillString = (() => {
+              if (avg <= 20) return "Beginner";
+              if (avg <= 40) return "Elementary";
+              if (avg <= 60) return "Intermediate";
+              if (avg <= 80) return "Advanced";
+              return "Fluent";
+            })();
             const segmentAngle = 360 / skillEntries.length;
             const radius = 50;
             const center = 62.5;
@@ -144,60 +205,7 @@ export default function SkillDisplay({ languages, programming }: SkillDisplayPro
                 <div className="absolute text-center">
                   <h4 className="text-sm font-semibold text-gray-800">{lang}</h4>
                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                    {Math.round(avg)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-        <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-          💻 Programming Languages & Technologies
-        </h3>
-        <div className="grid gap-4 md:grid-cols-4">
-          {Object.entries(programming).map(([tech, { level, skill }], index) => {
-            const radius = 50;
-            const center = 62.5;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (level / 100) * circumference;
-
-            return (
-              <div
-                key={index}
-                className="relative w-[125px] h-[125px] mx-auto flex items-center justify-center"
-              >
-                <svg width="125" height="125">
-                  <circle
-                    cx={center}
-                    cy={center}
-                    r={radius}
-                    stroke="#e5e7eb"
-                    strokeWidth="8"
-                    fill="none"
-                  />
-                  <circle
-                    cx={center}
-                    cy={center}
-                    r={radius}
-                    stroke="#10b981"
-                    strokeWidth="6"
-                    fill="none"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    style={{ transition: "stroke-dashoffset 0.5s ease-in-out" }}
-                    onMouseEnter={(e) =>
-                      showTooltip(`${tech} - ${skill}: ${level}%`, e)
-                    }
-                    onMouseLeave={hideTooltip}
-                  />
-                </svg>
-                <div className="absolute text-center">
-                  <h4 className="text-sm font-semibold text-gray-800">{tech}</h4>
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                    {skill}
+                    {skillString}
                   </span>
                 </div>
               </div>
