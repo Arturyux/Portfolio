@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faLink
-} from "@fortawesome/free-solid-svg-icons";
+import { faLink } from "@fortawesome/free-solid-svg-icons";
 import {
   faGithub,
   faLinkedin,
@@ -234,33 +231,33 @@ export default function Home() {
           alt={profile?.name || "null"}
           className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
         />
-          <div className="text-center mb-8">
-            <p className="text-black text-2xl font-semibold mb-2">
-              {profile?.bioshort || "null"}
-            </p>
-            {profile?.bio && profile?.bio !== profile?.bioshort && (
-              <button
-                onClick={() => setShowFullBio((prev) => !prev)}
-                className="text-blue-700 hover:underline mt-2 text-lg font-semibold"
+        <div className="text-center mb-8">
+          <p className="text-black text-2xl font-semibold mb-2">
+            {profile?.bioshort || "null"}
+          </p>
+          {profile?.bio && profile?.bio !== profile?.bioshort && (
+            <button
+              onClick={() => setShowFullBio((prev) => !prev)}
+              className="text-blue-700 hover:underline mt-2 text-lg font-semibold"
+            >
+              {showFullBio ? "Show less." : "Read more."}
+            </button>
+          )}
+          <AnimatePresence>
+            {showFullBio && (
+              <motion.div
+                key="full-bio"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "backInOut" }}
+                className="mt-4 text-gray-700 text-base max-w-2xl mx-auto"
               >
-                {showFullBio ? "Show less." : "Read more."}
-              </button>
+                <p>{profile?.bio}</p>
+              </motion.div>
             )}
-            <AnimatePresence>
-              {showFullBio && (
-                <motion.div
-                  key="full-bio"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3, ease: "backInOut" }}
-                  className="mt-4 text-gray-700 text-base max-w-2xl mx-auto"
-                >
-                  <p>{profile?.bio}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          </AnimatePresence>
+        </div>
 
         <div className="flex justify-center space-x-4 mb-6 flex-wrap">
           {profile?.socials?.map((social, index) => (
@@ -290,8 +287,8 @@ export default function Home() {
   return (
     <div className="flex flex-col mt-30 mx-50 md:mx-2 md:mt-2 min-h-screen font-sans bg-gradient-to-b bg-white">
       <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full">
-        <nav className="bg-white w-full md:w-80 p-6 md:border-r border-gray-200 overflow-y-auto">
-          <ul className="space-y-2 mt-30">
+        <nav className="bg-white w-full md:w-80 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center">
+          <ul className="space-y-2">
             {loading ? (
               <li className="text-gray-500">Loading categories...</li>
             ) : error ? (
