@@ -4,8 +4,37 @@ import path from "path";
 
 const filePath = path.join(process.cwd(), "public", "data", "profile.json");
 
+interface LanguageItem {
+  lang: string;
+  reading: number;
+  writing: number;
+  speaking: number;
+  listening: number;
+  skills: string;
+}
+
+interface ProgrammingItem {
+  lang:string;
+  level: number;
+  skills: string;
+}
+
 function readData() {
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error("Error reading profile data:", error);
+    return {
+      name: "",
+      bioshort: "",
+      bio: "",
+      avatar: "",
+      socials: [],
+      languages: {},
+      programming: {},
+    };
+  }
 }
 
 function writeData(data: any) {
@@ -17,11 +46,64 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const body = await req.json();
-  const { name, bio, avatar, socials } = body;
-  if (!name || !bio || !avatar || !Array.isArray(socials)) {
-    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  try {
+    const body = await req.json();
+    const { name, bioshort, bio, avatar, socials, languages, programming } =
+      body;
+
+    if (
+      !name ||
+      !bioshort ||
+      !bio ||
+      !avatar ||
+      !Array.isArray(socials) ||
+      !Array.isArray(languages) ||
+      !Array.isArray(programming)
+    ) {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
+
+    const currentData = readData();
+
+    const languagesObject = languages.reduce(
+      (acc: Record<string, any>, item: LanguageItem) => {
+        acc[item.lang] = {
+          reading: item.reading,
+          writing: item.writing,
+          speaking: item.speaking,
+          listening: item.listening,
+        };
+        return acc;
+      },
+      {}
+    );
+
+    const programmingObject = programming.reduce(
+      (acc: Record<string, any>, item: ProgrammingItem) => {
+        acc[item.lang] = { level: item.level, skill: item.skills };
+        return acc;
+      },
+      {}
+    );
+
+    const newData = {
+      ...currentData,
+      name,
+      bioshort,
+      bio,
+      avatar,
+      socials,
+      languages: languagesObject,
+      programming: programmingObject,
+    };
+
+    writeData(newData);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-  writeData({ name, bio, avatar, socials });
-  return NextResponse.json({ success: true });
 }

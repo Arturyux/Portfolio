@@ -14,7 +14,10 @@ export interface PortfolioItem {
 
 interface LanguageItem {
   lang: string;
-  level: number;
+  reading: number;
+  writing: number;
+  speaking: number;
+  listening: number;
   skills: string;
 }
 
@@ -54,21 +57,25 @@ export default function AdminContent() {
 
   const [profile, setProfile] = useState<{
     name: string;
+    bioshort: string;
     bio: string;
     avatar: string;
     socials: { platform: string; url: string }[];
-    languages: LanguageItem[];
-    programming: ProgrammingItem[];
+    languages: any;
+    programming: any;
   } | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileName, setProfileName] = useState("");
+  const [profileBioshort, setProfileBioshort] = useState("");
   const [profileBio, setProfileBio] = useState("");
   const [profileAvatar, setProfileAvatar] = useState("");
   const [profileSocials, setProfileSocials] = useState<
     { platform: string; url: string }[]
   >([]);
   const [profileLanguages, setProfileLanguages] = useState<LanguageItem[]>([]);
-  const [profileProgramming, setProfileProgramming] = useState<ProgrammingItem[]>([]);
+  const [profileProgramming, setProfileProgramming] = useState<
+    ProgrammingItem[]
+  >([]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -98,13 +105,39 @@ export default function AdminContent() {
       if (!res.ok) throw new Error("Failed to fetch profile");
       const profileData = await res.json();
       setProfile(profileData);
+
       setProfileName(profileData.name);
+      setProfileBioshort(profileData.bioshort || "");
       setProfileBio(profileData.bio);
       setProfileAvatar(profileData.avatar);
       setProfileSocials(profileData.socials || []);
-      setProfileLanguages(profileData.languages || []);
-      setProfileProgramming(profileData.programming || []);
+
+      const languagesArray = profileData.languages
+        ? Object.entries(profileData.languages).map(
+            ([lang, details]: [string, any]) => ({
+              lang,
+              reading: details.reading || 0,
+              writing: details.writing || 0,
+              speaking: details.speaking || 0,
+              listening: details.listening || 0,
+              skills: "",
+            })
+          )
+        : [];
+      setProfileLanguages(languagesArray);
+
+      const programmingArray = profileData.programming
+        ? Object.entries(profileData.programming).map(
+            ([lang, details]: [string, any]) => ({
+              lang,
+              level: details.level,
+              skills: details.skill,
+            })
+          )
+        : [];
+      setProfileProgramming(programmingArray);
     } catch (err) {
+      console.error(err);
       alert("Failed to fetch profile");
     }
   };
@@ -247,6 +280,7 @@ export default function AdminContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: profileName,
+        bioshort: profileBioshort,
         bio: profileBio,
         avatar: profileAvatar,
         socials: profileSocials,
@@ -281,16 +315,37 @@ export default function AdminContent() {
   };
 
   const addLanguage = () => {
-    setProfileLanguages([...profileLanguages, { lang: "", level: 0, skills: "" }]);
+    setProfileLanguages([
+      ...profileLanguages,
+      {
+        lang: "",
+        reading: 0,
+        writing: 0,
+        speaking: 0,
+        listening: 0,
+        skills: "",
+      },
+    ]);
   };
 
   const updateLanguage = (
     index: number,
-    field: "lang" | "level" | "skills",
+    field:
+      | "lang"
+      | "reading"
+      | "writing"
+      | "speaking"
+      | "listening"
+      | "skills",
     value: string | number
   ) => {
     const updated = [...profileLanguages];
-    if (field === "level") {
+    if (
+      field === "reading" ||
+      field === "writing" ||
+      field === "speaking" ||
+      field === "listening"
+    ) {
       updated[index][field] = Number(value);
     } else {
       updated[index][field] = value as string;
@@ -303,7 +358,10 @@ export default function AdminContent() {
   };
 
   const addProgramming = () => {
-    setProfileProgramming([...profileProgramming, { lang: "", level: 0, skills: "" }]);
+    setProfileProgramming([
+      ...profileProgramming,
+      { lang: "", level: 0, skills: "" },
+    ]);
   };
 
   const updateProgramming = (
@@ -387,55 +445,117 @@ export default function AdminContent() {
         {profile ? (
           editingProfile ? (
             <form onSubmit={handleProfileSubmit} className="grid gap-4">
-              <input
-                type="text"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                placeholder="Name"
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
-              <textarea
-                value={profileBio}
-                onChange={(e) => setProfileBio(e.target.value)}
-                placeholder="Bio"
-                className="px-3 py-2 border border-gray-300 rounded-md min-h-[100px]"
-                required
-              />
-              <input
-                type="text"
-                value={profileAvatar}
-                onChange={(e) => setProfileAvatar(e.target.value)}
-                placeholder="Avatar URL"
-                className="px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
+              <div>
+                <label
+                  htmlFor="profileName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Name
+                </label>
+                <input
+                  id="profileName"
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Name"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="profileBioshort"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Short Bio
+                </label>
+                <input
+                  id="profileBioshort"
+                  type="text"
+                  value={profileBioshort}
+                  onChange={(e) => setProfileBioshort(e.target.value)}
+                  placeholder="Short Bio"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="profileBio"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Full Bio
+                </label>
+                <textarea
+                  id="profileBio"
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  placeholder="Bio"
+                  className="px-3 py-2 border border-gray-300 rounded-md min-h-[100px] w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="profileAvatar"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Avatar URL
+                </label>
+                <input
+                  id="profileAvatar"
+                  type="text"
+                  value={profileAvatar}
+                  onChange={(e) => setProfileAvatar(e.target.value)}
+                  placeholder="Avatar URL"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  required
+                />
+              </div>
               <div>
                 <h3 className="font-semibold mb-2">Social Links</h3>
                 {profileSocials.map((social, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={social.platform}
-                      onChange={(e) =>
-                        updateSocial(index, "platform", e.target.value)
-                      }
-                      placeholder="Platform (e.g., LinkedIn)"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
-                    <input
-                      type="text"
-                      value={social.url}
-                      onChange={(e) =>
-                        updateSocial(index, "url", e.target.value)
-                      }
-                      placeholder="URL"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
+                  <div key={index} className="flex gap-2 mb-2 items-end">
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`socialPlatform-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Platform
+                      </label>
+                      <input
+                        id={`socialPlatform-${index}`}
+                        type="text"
+                        value={social.platform}
+                        onChange={(e) =>
+                          updateSocial(index, "platform", e.target.value)
+                        }
+                        placeholder="e.g., LinkedIn"
+                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`socialUrl-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        URL
+                      </label>
+                      <input
+                        id={`socialUrl-${index}`}
+                        type="text"
+                        value={social.url}
+                        onChange={(e) =>
+                          updateSocial(index, "url", e.target.value)
+                        }
+                        placeholder="https://..."
+                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeSocial(index)}
-                      className="px-2 py-1 bg-red-500 text-white rounded"
+                      className="px-2 py-2 bg-red-500 text-white rounded h-fit"
                     >
                       Remove
                     </button>
@@ -452,41 +572,104 @@ export default function AdminContent() {
               <div>
                 <h3 className="font-semibold mb-2">Languages</h3>
                 {profileLanguages.map((language, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={language.lang}
-                      onChange={(e) =>
-                        updateLanguage(index, "lang", e.target.value)
-                      }
-                      placeholder="Language"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
-                    <input
-                      type="number"
-                      value={language.level}
-                      onChange={(e) =>
-                        updateLanguage(index, "level", e.target.value)
-                      }
-                      placeholder="Level (0-100)"
-                      className="px-3 py-2 border border-gray-300 rounded-md w-24"
-                    />
-                    <input
-                      type="text"
-                      value={language.skills}
-                      onChange={(e) =>
-                        updateLanguage(index, "skills", e.target.value)
-                      }
-                      placeholder="Skills"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeLanguage(index)}
-                      className="px-2 py-1 bg-red-500 text-white rounded"
-                    >
-                      Remove
-                    </button>
+                  <div key={index} className="border p-3 rounded mb-3">
+                    <div className="flex gap-2 mb-2 items-end">
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`languageName-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Language
+                        </label>
+                        <input
+                          id={`languageName-${index}`}
+                          type="text"
+                          value={language.lang}
+                          onChange={(e) =>
+                            updateLanguage(index, "lang", e.target.value)
+                          }
+                          placeholder="e.g., English"
+                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeLanguage(index)}
+                        className="px-2 py-2 bg-red-500 text-white rounded h-fit"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                      <div>
+                        <label
+                          htmlFor={`languageReading-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Reading %
+                        </label>
+                        <input
+                          id={`languageReading-${index}`}
+                          value={language.reading}
+                          onChange={(e) =>
+                            updateLanguage(index, "reading", e.target.value)
+                          }
+                          placeholder="0-100"
+                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`languageWriting-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Writing %
+                        </label>
+                        <input
+                          id={`languageWriting-${index}`}
+                          value={language.writing}
+                          onChange={(e) =>
+                            updateLanguage(index, "writing", e.target.value)
+                          }
+                          placeholder="0-100"
+                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`languageSpeaking-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Speaking %
+                        </label>
+                        <input
+                          id={`languageSpeaking-${index}`}
+                          value={language.speaking}
+                          onChange={(e) =>
+                            updateLanguage(index, "speaking", e.target.value)
+                          }
+                          placeholder="0-100"
+                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`languageListening-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Listening %
+                        </label>
+                        <input
+                          id={`languageListening-${index}`}
+                          value={language.listening}
+                          onChange={(e) =>
+                            updateLanguage(index, "listening", e.target.value)
+                          }
+                          placeholder="0-100"
+                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
                 <button
@@ -498,40 +681,69 @@ export default function AdminContent() {
                 </button>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Programming Languages & Technologies</h3>
+                <h3 className="font-semibold mb-2">
+                  Programming Languages & Technologies
+                </h3>
                 {profileProgramming.map((programming, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={programming.lang}
-                      onChange={(e) =>
-                        updateProgramming(index, "lang", e.target.value)
-                      }
-                      placeholder="Language/Tech"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
-                    <input
-                      type="number"
-                      value={programming.level}
-                      onChange={(e) =>
-                        updateProgramming(index, "level", e.target.value)
-                      }
-                      placeholder="Level (0-100)"
-                      className="px-3 py-2 border border-gray-300 rounded-md w-24"
-                    />
-                    <input
-                      type="text"
-                      value={programming.skills}
-                      onChange={(e) =>
-                        updateProgramming(index, "skills", e.target.value)
-                      }
-                      placeholder="Skills"
-                      className="px-3 py-2 border border-gray-300 rounded-md flex-1"
-                    />
+                  <div key={index} className="flex gap-2 mb-2 items-end">
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`progLang-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Language / Technology
+                      </label>
+                      <input
+                        id={`progLang-${index}`}
+                        type="text"
+                        value={programming.lang}
+                        onChange={(e) =>
+                          updateProgramming(index, "lang", e.target.value)
+                        }
+                        placeholder="e.g., TypeScript"
+                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label
+                        htmlFor={`progLevel-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Level %
+                      </label>
+                      <input
+                        id={`progLevel-${index}`}
+                        type="number"
+                        value={programming.level}
+                        onChange={(e) =>
+                          updateProgramming(index, "level", e.target.value)
+                        }
+                        placeholder="0-100"
+                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`progSkills-${index}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Skills / Keywords
+                      </label>
+                      <input
+                        id={`progSkills-${index}`}
+                        type="text"
+                        value={programming.skills}
+                        onChange={(e) =>
+                          updateProgramming(index, "skills", e.target.value)
+                        }
+                        placeholder="e.g., Proficient"
+                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeProgramming(index)}
-                      className="px-2 py-1 bg-red-500 text-white rounded"
+                      className="px-2 py-2 bg-red-500 text-white rounded h-fit"
                     >
                       Remove
                     </button>
@@ -545,7 +757,7 @@ export default function AdminContent() {
                   Add Programming
                 </button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-4">
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -562,9 +774,12 @@ export default function AdminContent() {
               </div>
             </form>
           ) : (
-            <>
+            <div className="space-y-2">
               <p>
                 <strong>Name:</strong> {profile.name}
+              </p>
+              <p>
+                <strong>Short Bio:</strong> {profile.bioshort}
               </p>
               <p>
                 <strong>Bio:</strong> {profile.bio}
@@ -574,8 +789,8 @@ export default function AdminContent() {
               </p>
               <div>
                 <strong>Socials:</strong>
-                <ul>
-                  {profile?.socials?.map((s, i) => (
+                <ul className="list-disc list-inside">
+                  {profileSocials.map((s, i) => (
                     <li key={i}>
                       {s.platform}: {s.url}
                     </li>
@@ -584,18 +799,20 @@ export default function AdminContent() {
               </div>
               <div>
                 <strong>Languages:</strong>
-                <ul>
-                  {profile?.languages?.map((l, i) => (
+                <ul className="list-disc list-inside">
+                  {profileLanguages.map((l, i) => (
                     <li key={i}>
-                      {l.lang}: {l.skills} (Level: {l.level}%)
+                      <strong>{l.lang}:</strong> Reading: {l.reading}%, Writing:{" "}
+                      {l.writing}%, Speaking: {l.speaking}%, Listening:{" "}
+                      {l.listening}%
                     </li>
                   ))}
                 </ul>
               </div>
               <div>
                 <strong>Programming:</strong>
-                <ul>
-                  {profile.programming.map((p, i) => (
+                <ul className="list-disc list-inside">
+                  {profileProgramming.map((p, i) => (
                     <li key={i}>
                       {p.lang}: {p.skills} (Level: {p.level}%)
                     </li>
@@ -608,7 +825,7 @@ export default function AdminContent() {
               >
                 Edit Profile
               </button>
-            </>
+            </div>
           )
         ) : (
           <p>Loading profile...</p>
@@ -703,7 +920,10 @@ export default function AdminContent() {
                       )}
                     </div>
                     <AdminItemList
-                      items={data[cat].projects.map(item => ({ ...item, category: cat }))}
+                      items={data[cat].projects.map((item) => ({
+                        ...item,
+                        category: cat,
+                      }))}
                       editingId={editingId}
                       existingCategories={categories}
                       editCategory={editCategory}
