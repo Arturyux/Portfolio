@@ -34,7 +34,6 @@ export default function GeneralInfoEditor({
   const [isUnderline, setIsUnderline] = useState(false);
   const [isBulletList, setIsBulletList] = useState(false);
   const [isOrderedList, setIsOrderedList] = useState(false);
-  // ADDED: Heading state variables
   const [isH1, setIsH1] = useState(false);
   const [isH2, setIsH2] = useState(false);
   const [isH3, setIsH3] = useState(false);
@@ -53,7 +52,7 @@ export default function GeneralInfoEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]",
+          "prose max-w-none focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]",
       },
     },
     onUpdate: ({ editor }) => {

@@ -70,7 +70,7 @@ export default function AdminForm({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]",
+          "prose max-w-none focus:outline-none p-2 border border-gray-300 rounded-md min-h-[100px]",
       },
     },
     onUpdate: ({ editor }) => {
@@ -79,7 +79,6 @@ export default function AdminForm({
       setIsUnderline(editor.isActive("underline"));
       setIsBulletList(editor.isActive("bulletList"));
       setIsOrderedList(editor.isActive("orderedList"));
-      // ADDED: Update heading states
       setIsH1(editor.isActive("heading", { level: 1 }));
       setIsH2(editor.isActive("heading", { level: 2 }));
       setIsH3(editor.isActive("heading", { level: 3 }));
@@ -94,7 +93,6 @@ export default function AdminForm({
         setIsUnderline(editor.isActive("underline"));
         setIsBulletList(editor.isActive("bulletList"));
         setIsOrderedList(editor.isActive("orderedList"));
-        // ADDED: Update heading states
         setIsH1(editor.isActive("heading", { level: 1 }));
         setIsH2(editor.isActive("heading", { level: 2 }));
         setIsH3(editor.isActive("heading", { level: 3 }));
@@ -227,7 +225,6 @@ export default function AdminForm({
             className={isUnderline ? "text-white" : "text-gray-800"}
           />
         </button>
-        {/* ADDED: Heading buttons */}
         <button
           type="button"
           onClick={() =>

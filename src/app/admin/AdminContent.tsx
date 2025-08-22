@@ -73,7 +73,6 @@ const BioEditorToolbar = ({ editor }: { editor: any }) => {
       >
         <FontAwesomeIcon icon={faUnderline} />
       </button>
-      {/* ADDED: Heading buttons */}
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -569,7 +568,6 @@ export default function AdminContent() {
         {profile ? (
           editingProfile ? (
             <form onSubmit={handleProfileSubmit} className="grid gap-4">
-              {/* ... (Name, Short Bio, Avatar URL fields are the same) */}
               <div>
                 <label
                   htmlFor="profileName"
@@ -611,10 +609,8 @@ export default function AdminContent() {
                 >
                   Full Bio
                 </label>
-                {/* START: Replaced textarea with Tiptap Editor */}
                 <BioEditorToolbar editor={bioEditor} />
                 <EditorContent editor={bioEditor} />
-                {/* END: Replaced textarea with Tiptap Editor */}
               </div>
               <div>
                 <label
@@ -633,7 +629,6 @@ export default function AdminContent() {
                   required
                 />
               </div>
-              {/* ... (Socials, Languages, Programming sections are the same) */}
               <div>
                 <h3 className="font-semibold mb-2">Social Links</h3>
                 {profileSocials.map((social, index) => (
@@ -957,7 +952,6 @@ export default function AdminContent() {
           <p>Loading profile...</p>
         )}
       </div>
-      {/* ... (Rest of the component remains the same) */}
       <div className="w-full mb-8">
         <h2 className="text-2xl font-bold mb-4">Add New Portfolio Item</h2>
         <AdminForm

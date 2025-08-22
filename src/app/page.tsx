@@ -13,7 +13,7 @@ import {
   faTwitter,
   faYoutube,
   faTiktok,
-  faReddit
+  faReddit,
 } from "@fortawesome/free-brands-svg-icons";
 import SkillDisplay from "@/components/SkillDisplay";
 
@@ -60,7 +60,7 @@ const socialIcons: { [key: string]: any } = {
   twitter: faTwitter,
   youtube: faYoutube,
   tiktok: faTiktok,
-  reddit: faReddit
+  reddit: faReddit,
 };
 
 export default function Home() {
@@ -85,7 +85,7 @@ export default function Home() {
       try {
         const [portfolioRes, profileRes] = await Promise.all([
           fetch("/api/portfolio"),
-          fetch("/api/profile")
+          fetch("/api/profile"),
         ]);
         if (!portfolioRes.ok) throw new Error("Failed to fetch portfolio");
         if (!profileRes.ok) throw new Error("Failed to fetch profile");
@@ -145,7 +145,7 @@ export default function Home() {
     if (activeCategory !== cat) {
       setCategoryScales((prev) => ({
         ...prev,
-        [cat]: hover ? 1.15 : 1
+        [cat]: hover ? 1.15 : 1,
       }));
     }
   };
@@ -154,7 +154,7 @@ export default function Home() {
     if (activeProject !== id) {
       setProjectScales((prev) => ({
         ...prev,
-        [id]: hover ? 1.15 : 1
+        [id]: hover ? 1.15 : 1,
       }));
     }
   };
@@ -183,7 +183,7 @@ export default function Home() {
             <div
               className="text-lg text-gray-700 prose max-w-none"
               dangerouslySetInnerHTML={{
-                __html: selectedItem.description
+                __html: selectedItem.description,
               }}
             />
           </motion.div>
@@ -205,7 +205,7 @@ export default function Home() {
           <div
             className="text-lg text-gray-700 prose max-w-none"
             dangerouslySetInnerHTML={{
-              __html: data[activeCategory].generalInfo
+              __html: data[activeCategory].generalInfo,
             }}
           />
         </motion.div>
@@ -251,9 +251,11 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: "backInOut" }}
-                className="mt-4 text-gray-700 text-base max-w-2xl mx-auto"
+                className="mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
               >
-                <p>{profile?.bio}</p>
+                <div
+                  dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -307,7 +309,7 @@ export default function Home() {
                     onMouseLeave={() => handleCategoryHover(cat, false)}
                     animate={{ scale: categoryScales[cat] || 1 }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
+                    className="w-full flex items-center font-semibold justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
                   >
                     {cat}
                     <span className="text-gray-600">
@@ -336,7 +338,7 @@ export default function Home() {
                               animate={{ scale: projectScales[item.id] || 1 }}
                               transition={{
                                 duration: 0.2,
-                                ease: "easeInOut"
+                                ease: "easeInOut",
                               }}
                               className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
                             >
