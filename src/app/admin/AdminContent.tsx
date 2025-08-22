@@ -3,7 +3,20 @@
 import { useState, useEffect } from "react";
 import AdminForm from "../../components/AdminForm";
 import AdminItemList from "../../components/AdminItemList";
+import GeneralInfoEditor from "../../components/GeneralInfoEditor";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Placeholder from "@tiptap/extension-placeholder";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBold,
+  faItalic,
+  faUnderline,
+  faListUl,
+  faListOl,
+} from "@fortawesome/free-solid-svg-icons";
 
 export interface PortfolioItem {
   id: string;
@@ -27,6 +40,99 @@ interface ProgrammingItem {
   skills: string;
 }
 
+const BioEditorToolbar = ({ editor }: { editor: any }) => {
+  if (!editor) {
+    return null;
+  }
+  return (
+    <div className="flex space-x-2 mb-2 flex-wrap border border-gray-200 p-1 rounded-md">
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`p-2 rounded ${
+          editor.isActive("bold") ? "bg-blue-500 text-white" : "bg-gray-200"
+        }`}
+      >
+        <FontAwesomeIcon icon={faBold} />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`p-2 rounded ${
+          editor.isActive("italic") ? "bg-blue-500 text-white" : "bg-gray-200"
+        }`}
+      >
+        <FontAwesomeIcon icon={faItalic} />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={`p-2 rounded ${
+          editor.isActive("underline") ? "bg-blue-500 text-white" : "bg-gray-200"
+        }`}
+      >
+        <FontAwesomeIcon icon={faUnderline} />
+      </button>
+      {/* ADDED: Heading buttons */}
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        className={`p-2 rounded w-8 font-semibold ${
+          editor.isActive("heading", { level: 1 })
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        H1
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={`p-2 rounded w-8 font-semibold ${
+          editor.isActive("heading", { level: 2 })
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        H2
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        className={`p-2 rounded w-8 font-semibold ${
+          editor.isActive("heading", { level: 3 })
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        H3
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`p-2 rounded ${
+          editor.isActive("bulletList")
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        <FontAwesomeIcon icon={faListUl} />
+      </button>
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`p-2 rounded ${
+          editor.isActive("orderedList")
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200"
+        }`}
+      >
+        <FontAwesomeIcon icon={faListOl} />
+      </button>
+    </div>
+  );
+};
+
 export default function AdminContent() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -42,7 +148,6 @@ export default function AdminContent() {
   const [editingCategoryInfo, setEditingCategoryInfo] = useState<string | null>(
     null
   );
-  const [editGeneralInfo, setEditGeneralInfo] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
   const [newCategory, setNewCategory] = useState<string>("");
@@ -76,6 +181,30 @@ export default function AdminContent() {
   const [profileProgramming, setProfileProgramming] = useState<
     ProgrammingItem[]
   >([]);
+
+  const bioEditor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({
+        placeholder: "Write your full bio here...",
+      }),
+    ],
+    content: profileBio,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class:
+          "prose max-w-none focus:outline-none p-2 border border-gray-300 rounded-md min-h-[200px]",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (editingProfile && profile && bioEditor) {
+      bioEditor.commands.setContent(profile.bio);
+    }
+  }, [editingProfile, profile, bioEditor]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -246,11 +375,11 @@ export default function AdminContent() {
     }
   };
 
-  const handleCategoryInfoSubmit = async (cat: string) => {
+  const handleCategoryInfoSubmit = async (cat: string, newInfo: string) => {
     const res = await fetch("/api/portfolio?type=generalInfo", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category: cat, generalInfo: editGeneralInfo }),
+      body: JSON.stringify({ category: cat, generalInfo: newInfo }),
     });
     if (res.ok) {
       setEditingCategoryInfo(null);
@@ -281,7 +410,7 @@ export default function AdminContent() {
       body: JSON.stringify({
         name: profileName,
         bioshort: profileBioshort,
-        bio: profileBio,
+        bio: bioEditor?.getHTML() || "",
         avatar: profileAvatar,
         socials: profileSocials,
         languages: profileLanguages,
@@ -382,11 +511,6 @@ export default function AdminContent() {
     setProfileProgramming(profileProgramming.filter((_, i) => i !== index));
   };
 
-  const startEditingCategoryInfo = (cat: string) => {
-    setEditingCategoryInfo(cat);
-    setEditGeneralInfo(data[cat].generalInfo);
-  };
-
   if (!isLoggedIn) {
     return (
       <form
@@ -445,6 +569,7 @@ export default function AdminContent() {
         {profile ? (
           editingProfile ? (
             <form onSubmit={handleProfileSubmit} className="grid gap-4">
+              {/* ... (Name, Short Bio, Avatar URL fields are the same) */}
               <div>
                 <label
                   htmlFor="profileName"
@@ -486,14 +611,10 @@ export default function AdminContent() {
                 >
                   Full Bio
                 </label>
-                <textarea
-                  id="profileBio"
-                  value={profileBio}
-                  onChange={(e) => setProfileBio(e.target.value)}
-                  placeholder="Bio"
-                  className="px-3 py-2 border border-gray-300 rounded-md min-h-[100px] w-full"
-                  required
-                />
+                {/* START: Replaced textarea with Tiptap Editor */}
+                <BioEditorToolbar editor={bioEditor} />
+                <EditorContent editor={bioEditor} />
+                {/* END: Replaced textarea with Tiptap Editor */}
               </div>
               <div>
                 <label
@@ -512,6 +633,7 @@ export default function AdminContent() {
                   required
                 />
               </div>
+              {/* ... (Socials, Languages, Programming sections are the same) */}
               <div>
                 <h3 className="font-semibold mb-2">Social Links</h3>
                 {profileSocials.map((social, index) => (
@@ -781,9 +903,13 @@ export default function AdminContent() {
               <p>
                 <strong>Short Bio:</strong> {profile.bioshort}
               </p>
-              <p>
-                <strong>Bio:</strong> {profile.bio}
-              </p>
+              <div>
+                <strong>Bio:</strong>
+                <div
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: profile.bio }}
+                />
+              </div>
               <p>
                 <strong>Avatar:</strong> {profile.avatar}
               </p>
@@ -831,6 +957,7 @@ export default function AdminContent() {
           <p>Loading profile...</p>
         )}
       </div>
+      {/* ... (Rest of the component remains the same) */}
       <div className="w-full mb-8">
         <h2 className="text-2xl font-bold mb-4">Add New Portfolio Item</h2>
         <AdminForm
@@ -884,34 +1011,23 @@ export default function AdminContent() {
                         General Information
                       </h3>
                       {editingCategoryInfo === cat ? (
-                        <div>
-                          <textarea
-                            value={editGeneralInfo}
-                            onChange={(e) => setEditGeneralInfo(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md min-h-[100px]"
-                          />
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => handleCategoryInfoSubmit(cat)}
-                              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingCategoryInfo(null)}
-                              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
+                        <GeneralInfoEditor
+                          initialContent={data[cat].generalInfo}
+                          onSave={(html) => handleCategoryInfoSubmit(cat, html)}
+                          onCancel={() => setEditingCategoryInfo(null)}
+                        />
                       ) : (
                         <>
-                          <p className="text-gray-700 mb-2">
-                            {data[cat].generalInfo || "No general info set."}
-                          </p>
+                          <div
+                            className="text-gray-700 mb-2 prose max-w-none"
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                data[cat].generalInfo ||
+                                "<p>No general info set.</p>",
+                            }}
+                          />
                           <button
-                            onClick={() => startEditingCategoryInfo(cat)}
+                            onClick={() => setEditingCategoryInfo(cat)}
                             className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                           >
                             Edit General Info

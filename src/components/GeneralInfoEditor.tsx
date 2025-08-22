@@ -5,7 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBold,
@@ -18,43 +18,26 @@ import {
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
 
-interface AdminFormProps {
-  isEdit: boolean;
-  category: string;
-  title: string;
-  year: string;
-  description: string;
-  existingCategories: string[];
-  onCategoryChange: (value: string) => void;
-  onTitleChange: (value: string) => void;
-  onYearChange: (value: string) => void;
-  onSubmit: (e: FormEvent, description: string) => void;
-  onCancel?: () => void;
+interface GeneralInfoEditorProps {
+  initialContent: string;
+  onSave: (html: string) => void;
+  onCancel: () => void;
 }
 
-export default function AdminForm({
-  isEdit,
-  category,
-  title,
-  year,
-  description,
-  existingCategories,
-  onCategoryChange,
-  onTitleChange,
-  onYearChange,
-  onSubmit,
+export default function GeneralInfoEditor({
+  initialContent,
+  onSave,
   onCancel,
-}: AdminFormProps) {
+}: GeneralInfoEditorProps) {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isBulletList, setIsBulletList] = useState(false);
   const [isOrderedList, setIsOrderedList] = useState(false);
+  // ADDED: Heading state variables
   const [isH1, setIsH1] = useState(false);
   const [isH2, setIsH2] = useState(false);
   const [isH3, setIsH3] = useState(false);
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [newCategoryValue, setNewCategoryValue] = useState("");
 
   const editor = useEditor({
     extensions: [
@@ -62,10 +45,10 @@ export default function AdminForm({
       Underline,
       Image.configure({ inline: true, allowBase64: true }),
       Placeholder.configure({
-        placeholder: "Write the project description here…",
+        placeholder: "Write general information here…",
       }),
     ],
-    content: description,
+    content: initialContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -79,7 +62,6 @@ export default function AdminForm({
       setIsUnderline(editor.isActive("underline"));
       setIsBulletList(editor.isActive("bulletList"));
       setIsOrderedList(editor.isActive("orderedList"));
-      // ADDED: Update heading states
       setIsH1(editor.isActive("heading", { level: 1 }));
       setIsH2(editor.isActive("heading", { level: 2 }));
       setIsH3(editor.isActive("heading", { level: 3 }));
@@ -94,7 +76,6 @@ export default function AdminForm({
         setIsUnderline(editor.isActive("underline"));
         setIsBulletList(editor.isActive("bulletList"));
         setIsOrderedList(editor.isActive("orderedList"));
-        // ADDED: Update heading states
         setIsH1(editor.isActive("heading", { level: 1 }));
         setIsH2(editor.isActive("heading", { level: 2 }));
         setIsH3(editor.isActive("heading", { level: 3 }));
@@ -110,15 +91,10 @@ export default function AdminForm({
     }
   }, [editor]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const finalCategory = showNewCategoryInput ? newCategoryValue : category;
-    if (!finalCategory) {
-      alert("Please select or enter a category");
-      return;
+  const handleSave = () => {
+    if (editor) {
+      onSave(editor.getHTML());
     }
-    onCategoryChange(finalCategory);
-    onSubmit(e, editor?.getHTML() || "");
   };
 
   const addImage = () => {
@@ -128,63 +104,11 @@ export default function AdminForm({
     }
   };
 
-  const handleCategorySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    if (value === "new") {
-      setShowNewCategoryInput(true);
-      onCategoryChange("");
-    } else {
-      setShowNewCategoryInput(false);
-      onCategoryChange(value);
-    }
-  };
-
   if (!editor) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-      <div className="flex flex-col gap-2">
-        <select
-          value={category}
-          onChange={handleCategorySelect}
-          className="px-3 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="">Select Category</option>
-          {existingCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-          <option value="new">Add New Category</option>
-        </select>
-        {showNewCategoryInput && (
-          <input
-            type="text"
-            value={newCategoryValue}
-            onChange={(e) => setNewCategoryValue(e.target.value)}
-            placeholder="New Category Name"
-            className="px-3 py-2 border border-gray-300 rounded-md"
-            required
-          />
-        )}
-      </div>
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => onTitleChange(e.target.value)}
-        placeholder="Title"
-        className="px-3 py-2 border border-gray-300 rounded-md"
-        required
-      />
-      <input
-        type="text"
-        value={year}
-        onChange={(e) => onYearChange(e.target.value)}
-        placeholder="Year (e.g., 2023)"
-        className="px-3 py-2 border border-gray-300 rounded-md"
-        required
-      />
-      <div className="flex space-x-2 mb-2 flex-wrap">
+    <div className="flex flex-col gap-2">
+      <div className="flex space-x-2 flex-wrap">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -227,7 +151,6 @@ export default function AdminForm({
             className={isUnderline ? "text-white" : "text-gray-800"}
           />
         </button>
-        {/* ADDED: Heading buttons */}
         <button
           type="button"
           onClick={() =>
@@ -318,23 +241,20 @@ export default function AdminForm({
         </button>
       </div>
       <EditorContent editor={editor} />
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-2">
         <button
-          type="submit"
+          onClick={handleSave}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          {isEdit ? "Save" : "Add Item"}
+          Save
         </button>
-        {isEdit && onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-        )}
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+        >
+          Cancel
+        </button>
       </div>
-    </form>
+    </div>
   );
 }
