@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink } from "@fortawesome/free-solid-svg-icons";
@@ -78,6 +78,17 @@ export default function Home() {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const bioRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (bioRef.current) {
+      bioRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: showFullBio ? "start" : "center",
+      });
+    }
+  }, [showFullBio]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -243,22 +254,24 @@ export default function Home() {
               {showFullBio ? "Show less." : "Read more."}
             </button>
           )}
-          <AnimatePresence>
-            {showFullBio && (
-              <motion.div
-                key="full-bio"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "backInOut" }}
-                className="mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
-              >
-                <div
-                  dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div ref={bioRef}>
+            <AnimatePresence>
+              {showFullBio && (
+                <motion.div
+                  key="full-bio"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
+                >
+                  <div
+                    dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div className="flex justify-center space-x-4 mb-6 flex-wrap">
@@ -361,8 +374,7 @@ export default function Home() {
       </div>
       <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm">
         <div className="max-w-7xl mx-auto px-4">
-          <p className="mb-1">&copy; 2025 </p>
-          <p>by Artur Burlakin</p>
+          <p>&copy; 2025 by Artur Burlakin</p>
         </div>
       </footer>
     </div>

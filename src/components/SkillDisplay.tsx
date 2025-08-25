@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LanguagesData {
   [language: string]: {
@@ -20,204 +21,318 @@ interface SkillDisplayProps {
   programming: ProgrammingData;
 }
 
-const skillColors: Record<string, string> = {
-  reading: "#3b82f6",
-  writing: "#10b981",
-  speaking: "#ef4444",
-  listening: "#8b5cf6"
-};
+export default function SkillDisplay({
+  languages,
+  programming
+}: SkillDisplayProps) {
+  const [showAllProgramming, setShowAllProgramming] = useState(false);
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
 
-export default function SkillDisplay({ languages, programming }: SkillDisplayProps) {
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const circleSize = 150;
+  const radius = 60;
+  const center = circleSize / 2;
 
-  const showTooltip = (text: string, e: React.MouseEvent) => {
-    const rect = (e.target as SVGPathElement | SVGCircleElement).getBoundingClientRect();
-    setTooltip({
-      text,
-      x: rect.left + rect.width / 2,
-      y: rect.top - 8
-    });
-  };
-
-  const hideTooltip = () => {
-    setTooltip(null);
-  };
-
-  const polarToCartesian = (cx: number, cy: number, r: number, angle: number) => {
-    const rad = ((angle - 90) * Math.PI) / 180;
-    return {
-      x: cx + r * Math.cos(rad),
-      y: cy + r * Math.sin(rad)
-    };
-  };
-
-  const describeArc = (
-    cx: number,
-    cy: number,
-    r: number,
-    startAngle: number,
-    endAngle: number
-  ) => {
-    const start = polarToCartesian(cx, cy, r, endAngle);
-    const end = polarToCartesian(cx, cy, r, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    return [
-      "M",
-      start.x,
-      start.y,
-      "A",
-      r,
-      r,
-      0,
-      largeArcFlag,
-      0,
-      end.x,
-      end.y
-    ].join(" ");
+  const itemVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 }
   };
 
   return (
     <div className="w-full flex flex-col gap-8 relative">
-      {tooltip && (
-        <div
-          className="absolute bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none z-50"
-          style={{
-            left: tooltip.x,
-            top: tooltip.y,
-            transform: "translate(-50%, -100%)"
-          }}
-        >
-          {tooltip.text}
-        </div>
-      )}
-           <div className="p-2">
-        {/* <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-          Programming Languages & Technologies
-        </h3> */}
-        <div className="grid md:grid-cols-6">
-          {Object.entries(programming).map(([tech, { level, skill }], index) => {
-            const radius = 50;
-            const center = 62.5;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (level / 100) * circumference;
+      <div className="p-2">
+        <div className="grid md:grid-cols-4 gap-6">
+          {Object.entries(programming)
+            .slice(0, 4)
+            .map(([tech, { level, skill }], index) => {
+              const circumference = 2 * Math.PI * radius;
+              const offset = circumference - (level / 100) * circumference;
 
-            return (
-              <div
-                key={index}
-                className="relative w-[125px] h-[125px] mx-auto flex items-center justify-center"
-              >
-                <svg width="125" height="125">
-                  <circle
-                    cx={center}
-                    cy={center}
-                    r={radius}
-                    stroke="#e5e7eb"
-                    strokeWidth="8"
-                    fill="none"
-                  />
-                  <circle
-                    cx={center}
-                    cy={center}
-                    r={radius}
-                    stroke="#10b981"
-                    strokeWidth="6"
-                    fill="none"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    style={{ transition: "stroke-dashoffset 0.5s ease-in-out" }}
-                    onMouseEnter={(e) =>
-                      showTooltip(`${tech} - ${skill}: ${level}%`, e)
-                    }
-                    onMouseLeave={hideTooltip}
-                  />
-                </svg>
-                <div className="absolute text-center">
-                  <h4 className="text-sm font-semibold text-gray-800">{tech}</h4>
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                    {skill}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              return (
+                <motion.div
+                  key={tech}
+                  className="relative w-[150px] h-[150px] mx-auto flex items-center justify-center"
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <svg width={circleSize} height={circleSize}>
+                    <circle
+                      cx={center}
+                      cy={center}
+                      r={radius}
+                      stroke="#e5e7eb"
+                      strokeWidth="8"
+                      fill="none"
+                    />
+                    <circle
+                      cx={center}
+                      cy={center}
+                      r={radius}
+                      stroke="#6b7280"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      strokeLinecap="round"
+                      style={{
+                        transition: "stroke-dashoffset 0.8s ease-in-out"
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute text-center">
+                    <h4 className="text-lg font-semibold text-gray-800">
+                      {tech}
+                    </h4>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full font-semibold text-sm">
+                      {skill}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
         </div>
+
+        <AnimatePresence>
+          {showAllProgramming && (
+            <motion.div
+              className="grid md:grid-cols-4 gap-6 mt-4"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              {Object.entries(programming)
+                .slice(4)
+                .map(([tech, { level, skill }], index) => {
+                  const circumference = 2 * Math.PI * radius;
+                  const offset =
+                    circumference - (level / 100) * circumference;
+
+                  return (
+                    <motion.div
+                      key={tech}
+                      className="relative w-[150px] h-[150px] mx-auto flex items-center justify-center"
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                    >
+                      <svg width={circleSize} height={circleSize}>
+                        <circle
+                          cx={center}
+                          cy={center}
+                          r={radius}
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                          fill="none"
+                        />
+                        <circle
+                          cx={center}
+                          cy={center}
+                          r={radius}
+                          stroke="#6b7280"
+                          strokeWidth="6"
+                          fill="none"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={offset}
+                          strokeLinecap="round"
+                          style={{
+                            transition: "stroke-dashoffset 0.8s ease-in-out"
+                          }}
+                        />
+                      </svg>
+                      <div className="absolute text-center">
+                        <h4 className="text-lg font-semibold text-gray-800">
+                          {tech}
+                        </h4>
+                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full font-semibold text-sm">
+                          {skill}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {Object.keys(programming).length > 4 && (
+          <div className="text-center mt-4">
+            <button
+              onClick={() => setShowAllProgramming(!showAllProgramming)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              {showAllProgramming ? "Show Less" : "Show More"}
+            </button>
+          </div>
+        )}
       </div>
+
       <div className="p-2">
         <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">
           🌍 Languages
         </h3>
-        <div className="text-center grid-cols-4 gap-10 mb-4">
-          <span className="text-2xl text-purple-500">■</span> Listining Level{" "}
-          <span className="text-2xl text-blue-500">■</span> Reading Level{" "}
-          <span className="text-2xl text-red-500">■</span> Speaking Level{" "}
-          <span className="text-2xl text-green-500">■</span> Writing Level{" "}
+        <div className="grid md:grid-cols-4 gap-6">
+          {Object.entries(languages)
+            .slice(0, 4)
+            .map(([lang, skills], index) => {
+              const skillEntries = Object.entries(skills);
+              const avg =
+                skillEntries.reduce((sum, [, val]) => sum + val, 0) /
+                skillEntries.length;
+
+              const skillString = (() => {
+                if (avg === 100) return "Native";
+                if (avg >= 80) return "Fluent";
+                if (avg >= 60) return "Advanced";
+                if (avg >= 40) return "Intermediate";
+                if (avg >= 20) return "Elementary";
+                return "Beginner";
+              })();
+
+              const circumference = 2 * Math.PI * radius;
+              const offset = circumference - (avg / 100) * circumference;
+
+              return (
+                <motion.div
+                  key={lang}
+                  className="relative w-[150px] h-[150px] mx-auto flex items-center justify-center"
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <svg width={circleSize} height={circleSize}>
+                    <circle
+                      cx={center}
+                      cy={center}
+                      r={radius}
+                      stroke="#e5e7eb"
+                      strokeWidth="8"
+                      fill="none"
+                    />
+                    <circle
+                      cx={center}
+                      cy={center}
+                      r={radius}
+                      stroke="#6b7280"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      strokeLinecap="round"
+                      transform={`rotate(-90 ${center} ${center})`}
+                      style={{
+                        transition: "stroke-dashoffset 0.8s ease-in-out"
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute text-center">
+                    <h4 className="text-lg font-semibold text-gray-800">
+                      {lang}
+                    </h4>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full font-semibold text-sm">
+                      {skillString}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
         </div>
-        <div className="grid md:grid-cols-4">
-          {Object.entries(languages).map(([lang, skills], index) => {
-            const skillEntries = Object.entries(skills);
-            const avg =
-              skillEntries.reduce((sum, [, val]) => sum + val, 0) /
-              skillEntries.length;
 
-            const skillString = (() => {
-              if (avg <= 20) return "Beginner";
-              if (avg <= 40) return "Elementary";
-              if (avg <= 60) return "Intermediate";
-              if (avg <= 80) return "Advanced";
-              return "Fluent";
-            })();
-            const segmentAngle = 360 / skillEntries.length;
-            const radius = 50;
-            const center = 62.5;
+        <AnimatePresence>
+          {showAllLanguages && (
+            <motion.div
+              className="grid md:grid-cols-4 gap-6 mt-4"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              {Object.entries(languages)
+                .slice(4)
+                .map(([lang, skills], index) => {
+                  const skillEntries = Object.entries(skills);
+                  const avg =
+                    skillEntries.reduce((sum, [, val]) => sum + val, 0) /
+                    skillEntries.length;
 
-            return (
-              <div
-                key={index}
-                className="relative w-[125px] h-[125px] mx-auto flex items-center justify-center"
-              >
-                <svg width="125" height="125">
-                  {skillEntries.map(([skillName, value], i) => {
-                    const startAngle = i * segmentAngle;
-                    const endAngle = startAngle + segmentAngle - 5;
-                    const filledEndAngle =
-                      startAngle + (segmentAngle - 5) * (value / 100);
+                  const skillString = (() => {
+                    if (avg === 100) return "Native";
+                    if (avg >= 80) return "Fluent";
+                    if (avg >= 60) return "Advanced";
+                    if (avg >= 40) return "Intermediate";
+                    if (avg >= 20) return "Elementary";
+                    return "Beginner";
+                  })();
 
-                    return (
-                      <g key={skillName}>
-                        <path
-                          d={describeArc(center, center, radius, startAngle, endAngle)}
+                  const circumference = 2 * Math.PI * radius;
+                  const offset =
+                    circumference - (avg / 100) * circumference;
+
+                  return (
+                    <motion.div
+                      key={lang}
+                      className="relative w-[150px] h-[150px] mx-auto flex items-center justify-center"
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                    >
+                      <svg width={circleSize} height={circleSize}>
+                        <circle
+                          cx={center}
+                          cy={center}
+                          r={radius}
                           stroke="#e5e7eb"
                           strokeWidth="8"
                           fill="none"
-                          strokeLinecap="round"
                         />
-                        <path
-                          d={describeArc(center, center, radius, startAngle, filledEndAngle)}
-                          stroke={skillColors[skillName.toLowerCase()] || "#3b82f6"}
+                        <circle
+                          cx={center}
+                          cy={center}
+                          r={radius}
+                          stroke="#6b7280"
                           strokeWidth="6"
                           fill="none"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={offset}
                           strokeLinecap="round"
-                          onMouseEnter={(e) =>
-                            showTooltip(`${skillName}: ${value}%`, e)
-                          }
-                          onMouseLeave={hideTooltip}
-                          style={{ cursor: "pointer" }}
+                          transform={`rotate(-90 ${center} ${center})`}
+                          style={{
+                            transition: "stroke-dashoffset 0.8s ease-in-out"
+                          }}
                         />
-                      </g>
-                    );
-                  })}
-                </svg>
-                <div className="absolute text-center">
-                  <h4 className="text-lg font-semibold text-gray-800">{lang}</h4>
-                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">
-                    {skillString}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                      </svg>
+                      <div className="absolute text-center">
+                        <h4 className="text-lg font-semibold text-gray-800">
+                          {lang}
+                        </h4>
+                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full font-semibold text-sm">
+                          {skillString}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {Object.keys(languages).length > 4 && (
+          <div className="text-center mt-4">
+            <button
+              onClick={() => setShowAllLanguages(!showAllLanguages)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              {showAllLanguages ? "Show Less" : "Show More"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
