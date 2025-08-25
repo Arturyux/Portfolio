@@ -15,6 +15,7 @@ import {
   faTiktok,
   faReddit,
 } from "@fortawesome/free-brands-svg-icons";
+import { Element, scroller } from "react-scroll";
 import SkillDisplay from "@/components/SkillDisplay";
 
 interface PortfolioItem {
@@ -81,12 +82,20 @@ export default function Home() {
 
   const bioRef = useRef<HTMLDivElement | null>(null);
 
+  const scrollToTop = () => {
+    scroller.scrollTo("topOfPage", {
+      duration: 500,
+      delay: 0,
+      smooth: "easeInOutQuart",
+    });
+  };
+
   useEffect(() => {
-    if (bioRef.current) {
-      bioRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: showFullBio ? "start" : "center",
-      });
+    if (showFullBio && bioRef.current) {
+      bioRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (!showFullBio) {
+      scrollToTop();
     }
   }, [showFullBio]);
 
@@ -135,6 +144,7 @@ export default function Home() {
     });
     setActiveProject(null);
     setProjectScales({});
+    scrollToTop();
   };
 
   const selectProject = (id: string) => {
@@ -150,6 +160,7 @@ export default function Home() {
       setProjectScales(resetScales);
       return isActive ? null : id;
     });
+    scrollToTop();
   };
 
   const handleCategoryHover = (cat: string, hover: boolean) => {
@@ -248,10 +259,13 @@ export default function Home() {
           </p>
           {profile?.bio && profile?.bio !== profile?.bioshort && (
             <button
-              onClick={() => setShowFullBio((prev) => !prev)}
-              className="text-blue-700 hover:underline mt-2 text-lg font-semibold"
+              onClick={() => {
+                setShowFullBio((prev) => !prev);
+                scrollToTop();
+              }}
+              className="items-center font-semibold mt-2 justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
             >
-              {showFullBio ? "Show less." : "Read more."}
+              {showFullBio ? "Show less -" : "Read more +"}
             </button>
           )}
           <div ref={bioRef}>
@@ -265,6 +279,11 @@ export default function Home() {
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
                 >
+                  <SkillDisplay
+                    languages={profile?.languages || {}}
+                    showProgramming={false}
+                    showLanguages={true}
+                  />
                   <div
                     dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
                   />
@@ -292,8 +311,9 @@ export default function Home() {
           ))}
         </div>
         <SkillDisplay
-          languages={profile?.languages || {}}
           programming={profile?.programming || {}}
+          showProgramming={true}
+          showLanguages={false}
         />
       </motion.div>
     );
@@ -301,8 +321,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col mt-30 mx-50 md:mx-2 md:mt-2 min-h-screen font-sans bg-gradient-to-b bg-white">
-      <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full">
-        <nav className="bg-white w-full md:w-80 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center">
+      <Element name="topOfPage" />
+      <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full items-start">
+        <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center">
           <ul className="space-y-2">
             {loading ? (
               <li className="text-gray-500">Loading categories...</li>
