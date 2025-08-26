@@ -1,22 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminForm from "../../components/AdminForm";
 import AdminItemList from "../../components/AdminItemList";
-import GeneralInfoEditor from "../../components/GeneralInfoEditor";
+import GeneralInfoEditor, {
+  GeneralInfoEditorRef,
+} from "../../components/GeneralInfoEditor";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Placeholder from "@tiptap/extension-placeholder";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBold,
-  faItalic,
-  faUnderline,
-  faListUl,
-  faListOl,
-} from "@fortawesome/free-solid-svg-icons";
 
 export interface PortfolioItem {
   id: string;
@@ -39,98 +29,6 @@ interface ProgrammingItem {
   level: number;
   skills: string;
 }
-
-const BioEditorToolbar = ({ editor }: { editor: any }) => {
-  if (!editor) {
-    return null;
-  }
-  return (
-    <div className="flex space-x-2 mb-2 flex-wrap border border-gray-200 p-1 rounded-md">
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-2 rounded ${
-          editor.isActive("bold") ? "bg-blue-500 text-white" : "bg-gray-200"
-        }`}
-      >
-        <FontAwesomeIcon icon={faBold} />
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-2 rounded ${
-          editor.isActive("italic") ? "bg-blue-500 text-white" : "bg-gray-200"
-        }`}
-      >
-        <FontAwesomeIcon icon={faItalic} />
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={`p-2 rounded ${
-          editor.isActive("underline") ? "bg-blue-500 text-white" : "bg-gray-200"
-        }`}
-      >
-        <FontAwesomeIcon icon={faUnderline} />
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        className={`p-2 rounded w-8 font-semibold ${
-          editor.isActive("heading", { level: 1 })
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200"
-        }`}
-      >
-        H1
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={`p-2 rounded w-8 font-semibold ${
-          editor.isActive("heading", { level: 2 })
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200"
-        }`}
-      >
-        H2
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        className={`p-2 rounded w-8 font-semibold ${
-          editor.isActive("heading", { level: 3 })
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200"
-        }`}
-      >
-        H3
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded ${
-          editor.isActive("bulletList")
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200"
-        }`}
-      >
-        <FontAwesomeIcon icon={faListUl} />
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded ${
-          editor.isActive("orderedList")
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200"
-        }`}
-      >
-        <FontAwesomeIcon icon={faListOl} />
-      </button>
-    </div>
-  );
-};
 
 export default function AdminContent() {
   const [username, setUsername] = useState<string>("");
@@ -181,29 +79,11 @@ export default function AdminContent() {
     ProgrammingItem[]
   >([]);
 
-  const bioEditor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Placeholder.configure({
-        placeholder: "Write your full bio here...",
-      }),
-    ],
-    content: profileBio,
-    immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        class:
-          "prose max-w-none focus:outline-none p-2 border border-gray-300 rounded-md min-h-[200px]",
-      },
-    },
-  });
+  // Ref for Bio editor
+  const bioEditorRef = useRef<GeneralInfoEditorRef>(null);
 
-  useEffect(() => {
-    if (editingProfile && profile && bioEditor) {
-      bioEditor.commands.setContent(profile.bio);
-    }
-  }, [editingProfile, profile, bioEditor]);
+  // Tab state
+  const [currentTab, setCurrentTab] = useState<"profile" | "skills">("profile");
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -287,6 +167,116 @@ export default function AdminContent() {
     }
   };
 
+  const handleProfileSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const bioHTML = bioEditorRef.current?.getHTML() || profileBio;
+
+    const res = await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: profileName,
+        bioshort: profileBioshort,
+        bio: bioHTML,
+        avatar: profileAvatar,
+        socials: profileSocials,
+        languages: profileLanguages,
+        programming: profileProgramming,
+      }),
+    });
+    if (res.ok) {
+      setEditingProfile(false);
+      fetchProfile();
+      alert("Profile updated successfully!");
+    } else {
+      alert("Failed to update profile");
+    }
+  };
+
+  // Socials
+  const addSocial = () => {
+    setProfileSocials([...profileSocials, { platform: "", url: "" }]);
+  };
+  const updateSocial = (
+    index: number,
+    field: "platform" | "url",
+    value: string
+  ) => {
+    const updated = [...profileSocials];
+    updated[index][field] = value;
+    setProfileSocials(updated);
+  };
+  const removeSocial = (index: number) => {
+    setProfileSocials(profileSocials.filter((_, i) => i !== index));
+  };
+
+  // Languages
+  const addLanguage = () => {
+    setProfileLanguages([
+      ...profileLanguages,
+      {
+        lang: "",
+        reading: 0,
+        writing: 0,
+        speaking: 0,
+        listening: 0,
+        skills: "",
+      },
+    ]);
+  };
+  const updateLanguage = (
+    index: number,
+    field:
+      | "lang"
+      | "reading"
+      | "writing"
+      | "speaking"
+      | "listening"
+      | "skills",
+    value: string | number
+  ) => {
+    const updated = [...profileLanguages];
+    if (
+      field === "reading" ||
+      field === "writing" ||
+      field === "speaking" ||
+      field === "listening"
+    ) {
+      updated[index][field] = Number(value);
+    } else {
+      updated[index][field] = value as string;
+    }
+    setProfileLanguages(updated);
+  };
+  const removeLanguage = (index: number) => {
+    setProfileLanguages(profileLanguages.filter((_, i) => i !== index));
+  };
+
+  // Programming
+  const addProgramming = () => {
+    setProfileProgramming([
+      ...profileProgramming,
+      { lang: "", level: 0, skills: "" },
+    ]);
+  };
+  const updateProgramming = (
+    index: number,
+    field: "lang" | "level" | "skills",
+    value: string | number
+  ) => {
+    const updated = [...profileProgramming];
+    if (field === "level") {
+      updated[index][field] = Number(value);
+    } else {
+      updated[index][field] = value as string;
+    }
+    setProfileProgramming(updated);
+  };
+  const removeProgramming = (index: number) => {
+    setProfileProgramming(profileProgramming.filter((_, i) => i !== index));
+  };
+
+  // Portfolio CRUD (unchanged)
   const handleAddSubmit = async (e: React.FormEvent, description: string) => {
     e.preventDefault();
     if (!newCategory) {
@@ -401,115 +391,6 @@ export default function AdminContent() {
     setEditingProfile(true);
   };
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: profileName,
-        bioshort: profileBioshort,
-        bio: bioEditor?.getHTML() || "",
-        avatar: profileAvatar,
-        socials: profileSocials,
-        languages: profileLanguages,
-        programming: profileProgramming,
-      }),
-    });
-    if (res.ok) {
-      setEditingProfile(false);
-      fetchProfile();
-    } else {
-      alert("Failed to update profile");
-    }
-  };
-
-  const addSocial = () => {
-    setProfileSocials([...profileSocials, { platform: "", url: "" }]);
-  };
-
-  const updateSocial = (
-    index: number,
-    field: "platform" | "url",
-    value: string
-  ) => {
-    const updated = [...profileSocials];
-    updated[index][field] = value;
-    setProfileSocials(updated);
-  };
-
-  const removeSocial = (index: number) => {
-    setProfileSocials(profileSocials.filter((_, i) => i !== index));
-  };
-
-  const addLanguage = () => {
-    setProfileLanguages([
-      ...profileLanguages,
-      {
-        lang: "",
-        reading: 0,
-        writing: 0,
-        speaking: 0,
-        listening: 0,
-        skills: "",
-      },
-    ]);
-  };
-
-  const updateLanguage = (
-    index: number,
-    field:
-      | "lang"
-      | "reading"
-      | "writing"
-      | "speaking"
-      | "listening"
-      | "skills",
-    value: string | number
-  ) => {
-    const updated = [...profileLanguages];
-    if (
-      field === "reading" ||
-      field === "writing" ||
-      field === "speaking" ||
-      field === "listening"
-    ) {
-      updated[index][field] = Number(value);
-    } else {
-      updated[index][field] = value as string;
-    }
-    setProfileLanguages(updated);
-  };
-
-  const removeLanguage = (index: number) => {
-    setProfileLanguages(profileLanguages.filter((_, i) => i !== index));
-  };
-
-  const addProgramming = () => {
-    setProfileProgramming([
-      ...profileProgramming,
-      { lang: "", level: 0, skills: "" },
-    ]);
-  };
-
-  const updateProgramming = (
-    index: number,
-    field: "lang" | "level" | "skills",
-    value: string | number
-  ) => {
-    const updated = [...profileProgramming];
-    if (field === "level") {
-      updated[index][field] = Number(value);
-    } else {
-      updated[index][field] = value as string;
-    }
-    setProfileProgramming(updated);
-  };
-
-  const removeProgramming = (index: number) => {
-    setProfileProgramming(profileProgramming.filter((_, i) => i !== index));
-  };
-
   if (!isLoggedIn) {
     return (
       <form
@@ -561,397 +442,310 @@ export default function AdminContent() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-white rounded shadow-md max-w-4xl w-full">
+    <div className="flex flex-col items-center justify-center p-8 bg-white rounded shadow-md max-w-5xl w-full">
       <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
-      <div className="w-full mb-8">
-        <h2 className="text-2xl font-bold mb-4">Settings - Profile</h2>
-        {profile ? (
-          editingProfile ? (
-            <form onSubmit={handleProfileSubmit} className="grid gap-4">
-              <div>
-                <label
-                  htmlFor="profileName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Name
-                </label>
-                <input
-                  id="profileName"
-                  type="text"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="Name"
-                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="profileBioshort"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Short Bio
-                </label>
-                <input
-                  id="profileBioshort"
-                  type="text"
-                  value={profileBioshort}
-                  onChange={(e) => setProfileBioshort(e.target.value)}
-                  placeholder="Short Bio"
-                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="profileBio"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Full Bio
-                </label>
-                <BioEditorToolbar editor={bioEditor} />
-                <EditorContent editor={bioEditor} />
-              </div>
-              <div>
-                <label
-                  htmlFor="profileAvatar"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Avatar URL
-                </label>
-                <input
-                  id="profileAvatar"
-                  type="text"
-                  value={profileAvatar}
-                  onChange={(e) => setProfileAvatar(e.target.value)}
-                  placeholder="Avatar URL"
-                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                  required
-                />
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Social Links</h3>
-                {profileSocials.map((social, index) => (
-                  <div key={index} className="flex gap-2 mb-2 items-end">
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`socialPlatform-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Platform
-                      </label>
+
+      {/* Tab Navigation */}
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setCurrentTab("profile")}
+          className={`px-4 py-2 rounded ${
+            currentTab === "profile"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
+        >
+          Profile
+        </button>
+        <button
+          onClick={() => setCurrentTab("skills")}
+          className={`px-4 py-2 rounded ${
+            currentTab === "skills"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-800"
+          }`}
+        >
+          Languages & Skills
+        </button>
+      </div>
+
+      {/* Profile Tab */}
+      {currentTab === "profile" && (
+        <div className="w-full mb-8">
+          <h2 className="text-2xl font-bold mb-4">Settings - Profile</h2>
+          {profile ? (
+            editingProfile ? (
+              <form onSubmit={handleProfileSubmit} className="grid gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="Name"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Short Bio
+                  </label>
+                  <input
+                    type="text"
+                    value={profileBioshort}
+                    onChange={(e) => setProfileBioshort(e.target.value)}
+                    placeholder="Short Bio"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Bio
+                  </label>
+                  <GeneralInfoEditor
+                    ref={bioEditorRef}
+                    initialContent={profileBio}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Avatar URL
+                  </label>
+                  <input
+                    type="text"
+                    value={profileAvatar}
+                    onChange={(e) => setProfileAvatar(e.target.value)}
+                    placeholder="Avatar URL"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                    required
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Social Links</h3>
+                  {profileSocials.map((social, index) => (
+                    <div key={index} className="flex gap-2 mb-2 items-end">
                       <input
-                        id={`socialPlatform-${index}`}
                         type="text"
                         value={social.platform}
                         onChange={(e) =>
                           updateSocial(index, "platform", e.target.value)
                         }
-                        placeholder="e.g., LinkedIn"
-                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        placeholder="Platform"
+                        className="px-3 py-2 border border-gray-300 rounded-md flex-1"
                       />
-                    </div>
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`socialUrl-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        URL
-                      </label>
                       <input
-                        id={`socialUrl-${index}`}
                         type="text"
                         value={social.url}
                         onChange={(e) =>
                           updateSocial(index, "url", e.target.value)
                         }
                         placeholder="https://..."
-                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                        className="px-3 py-2 border border-gray-300 rounded-md flex-1"
                       />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeSocial(index)}
-                      className="px-2 py-2 bg-red-500 text-white rounded h-fit"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addSocial}
-                  className="px-4 py-2 bg-green-500 text-white rounded mt-2"
-                >
-                  Add Social
-                </button>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Languages</h3>
-                {profileLanguages.map((language, index) => (
-                  <div key={index} className="border p-3 rounded mb-3">
-                    <div className="flex gap-2 mb-2 items-end">
-                      <div className="flex-1">
-                        <label
-                          htmlFor={`languageName-${index}`}
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Language
-                        </label>
-                        <input
-                          id={`languageName-${index}`}
-                          type="text"
-                          value={language.lang}
-                          onChange={(e) =>
-                            updateLanguage(index, "lang", e.target.value)
-                          }
-                          placeholder="e.g., English"
-                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                        />
-                      </div>
                       <button
                         type="button"
-                        onClick={() => removeLanguage(index)}
+                        onClick={() => removeSocial(index)}
                         className="px-2 py-2 bg-red-500 text-white rounded h-fit"
                       >
                         Remove
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-                      <div>
-                        <label
-                          htmlFor={`languageReading-${index}`}
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Reading %
-                        </label>
-                        <input
-                          id={`languageReading-${index}`}
-                          value={language.reading}
-                          onChange={(e) =>
-                            updateLanguage(index, "reading", e.target.value)
-                          }
-                          placeholder="0-100"
-                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`languageWriting-${index}`}
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Writing %
-                        </label>
-                        <input
-                          id={`languageWriting-${index}`}
-                          value={language.writing}
-                          onChange={(e) =>
-                            updateLanguage(index, "writing", e.target.value)
-                          }
-                          placeholder="0-100"
-                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`languageSpeaking-${index}`}
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Speaking %
-                        </label>
-                        <input
-                          id={`languageSpeaking-${index}`}
-                          value={language.speaking}
-                          onChange={(e) =>
-                            updateLanguage(index, "speaking", e.target.value)
-                          }
-                          placeholder="0-100"
-                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`languageListening-${index}`}
-                          className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                          Listening %
-                        </label>
-                        <input
-                          id={`languageListening-${index}`}
-                          value={language.listening}
-                          onChange={(e) =>
-                            updateLanguage(index, "listening", e.target.value)
-                          }
-                          placeholder="0-100"
-                          className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addSocial}
+                    className="px-4 py-2 bg-green-500 text-white rounded mt-2"
+                  >
+                    Add Social
+                  </button>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(false)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-2">
+                <p>
+                  <strong>Name:</strong> {profile.name}
+                </p>
+                <p>
+                  <strong>Short Bio:</strong> {profile.bioshort}
+                </p>
+                <div>
+                  <strong>Bio:</strong>
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: profile.bio }}
+                  />
+                </div>
+                <p>
+                  <strong>Avatar:</strong> {profile.avatar}
+                </p>
+                <div>
+                  <strong>Socials:</strong>
+                  <ul className="list-disc list-inside">
+                    {profileSocials.map((s, i) => (
+                      <li key={i}>
+                        {s.platform}: {s.url}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
                 <button
-                  type="button"
-                  onClick={addLanguage}
-                  className="px-4 py-2 bg-green-500 text-white rounded mt-2"
+                  onClick={startEditingProfile}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 mt-4"
                 >
-                  Add Language
+                  Edit Profile
                 </button>
               </div>
-              <div>
-                <h3 className="font-semibold mb-2">
-                  Programming Languages & Technologies
-                </h3>
-                {profileProgramming.map((programming, index) => (
-                  <div key={index} className="flex gap-2 mb-2 items-end">
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`progLang-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Language / Technology
-                      </label>
-                      <input
-                        id={`progLang-${index}`}
-                        type="text"
-                        value={programming.lang}
-                        onChange={(e) =>
-                          updateProgramming(index, "lang", e.target.value)
-                        }
-                        placeholder="e.g., TypeScript"
-                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                      />
-                    </div>
-                    <div className="w-24">
-                      <label
-                        htmlFor={`progLevel-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Level %
-                      </label>
-                      <input
-                        id={`progLevel-${index}`}
-                        type="number"
-                        value={programming.level}
-                        onChange={(e) =>
-                          updateProgramming(index, "level", e.target.value)
-                        }
-                        placeholder="0-100"
-                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`progSkills-${index}`}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Skills / Keywords
-                      </label>
-                      <input
-                        id={`progSkills-${index}`}
-                        type="text"
-                        value={programming.skills}
-                        onChange={(e) =>
-                          updateProgramming(index, "skills", e.target.value)
-                        }
-                        placeholder="e.g., Proficient"
-                        className="px-3 py-2 border border-gray-300 rounded-md w-full"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeProgramming(index)}
-                      className="px-2 py-2 bg-red-500 text-white rounded h-fit"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addProgramming}
-                  className="px-4 py-2 bg-green-500 text-white rounded mt-2"
-                >
-                  Add Programming
-                </button>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Save Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingProfile(false)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            )
           ) : (
-            <div className="space-y-2">
-              <p>
-                <strong>Name:</strong> {profile.name}
-              </p>
-              <p>
-                <strong>Short Bio:</strong> {profile.bioshort}
-              </p>
-              <div>
-                <strong>Bio:</strong>
-                <div
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: profile.bio }}
+            <p>Loading profile...</p>
+          )}
+        </div>
+      )}
+
+      {/* Skills Tab */}
+      {currentTab === "skills" && (
+        <div className="w-full mb-8">
+          <h2 className="text-2xl font-bold mb-4">Languages & Programming Skills</h2>
+
+          {/* Languages */}
+          <div>
+            <h3 className="font-semibold mb-2">Languages</h3>
+            {profileLanguages.map((language, index) => (
+              <div key={index} className="border p-3 rounded mb-3">
+                <div className="flex gap-2 mb-2 items-end">
+                  <input
+                    type="text"
+                    value={language.lang}
+                    onChange={(e) => updateLanguage(index, "lang", e.target.value)}
+                    placeholder="e.g., English"
+                    className="px-3 py-2 border border-gray-300 rounded-md flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeLanguage(index)}
+                    className="px-2 py-2 bg-red-500 text-white rounded h-fit"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                  <input
+                    type="number"
+                    value={language.reading}
+                    onChange={(e) => updateLanguage(index, "reading", e.target.value)}
+                    placeholder="Reading %"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  <input
+                    type="number"
+                    value={language.writing}
+                    onChange={(e) => updateLanguage(index, "writing", e.target.value)}
+                    placeholder="Writing %"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  <input
+                    type="number"
+                    value={language.speaking}
+                    onChange={(e) => updateLanguage(index, "speaking", e.target.value)}
+                    placeholder="Speaking %"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                  <input
+                    type="number"
+                    value={language.listening}
+                    onChange={(e) => updateLanguage(index, "listening", e.target.value)}
+                    placeholder="Listening %"
+                    className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                  />
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addLanguage}
+              className="px-4 py-2 bg-green-500 text-white rounded mt-2"
+            >
+              Add Language
+            </button>
+          </div>
+
+          {/* Programming */}
+          <div className="mt-6">
+            <h3 className="font-semibold mb-2">Programming Languages & Technologies</h3>
+            {profileProgramming.map((programming, index) => (
+              <div key={index} className="flex gap-2 mb-2 items-end">
+                <input
+                  type="text"
+                  value={programming.lang}
+                  onChange={(e) => updateProgramming(index, "lang", e.target.value)}
+                  placeholder="e.g., TypeScript"
+                  className="px-3 py-2 border border-gray-300 rounded-md flex-1"
                 />
+                <input
+                  type="number"
+                  value={programming.level}
+                  onChange={(e) => updateProgramming(index, "level", e.target.value)}
+                  placeholder="Level %"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-24"
+                />
+                <input
+                  type="text"
+                  value={programming.skills}
+                  onChange={(e) => updateProgramming(index, "skills", e.target.value)}
+                  placeholder="Skills / Keywords"
+                  className="px-3 py-2 border border-gray-300 rounded-md flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeProgramming(index)}
+                  className="px-2 py-2 bg-red-500 text-white rounded h-fit"
+                >
+                  Remove
+                </button>
               </div>
-              <p>
-                <strong>Avatar:</strong> {profile.avatar}
-              </p>
-              <div>
-                <strong>Socials:</strong>
-                <ul className="list-disc list-inside">
-                  {profileSocials.map((s, i) => (
-                    <li key={i}>
-                      {s.platform}: {s.url}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <strong>Languages:</strong>
-                <ul className="list-disc list-inside">
-                  {profileLanguages.map((l, i) => (
-                    <li key={i}>
-                      <strong>{l.lang}:</strong> Reading: {l.reading}%, Writing:{" "}
-                      {l.writing}%, Speaking: {l.speaking}%, Listening:{" "}
-                      {l.listening}%
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <strong>Programming:</strong>
-                <ul className="list-disc list-inside">
-                  {profileProgramming.map((p, i) => (
-                    <li key={i}>
-                      {p.lang}: {p.skills} (Level: {p.level}%)
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <button
-                onClick={startEditingProfile}
-                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 mt-4"
-              >
-                Edit Profile
-              </button>
-            </div>
-          )
-        ) : (
-          <p>Loading profile...</p>
-        )}
-      </div>
+            ))}
+            <button
+              type="button"
+              onClick={addProgramming}
+              className="px-4 py-2 bg-green-500 text-white rounded mt-2"
+            >
+              Add Programming
+            </button>
+          </div>
+
+          {/* Save Button */}
+          <div className="flex gap-2 mt-4">
+            <button
+              type="button"
+              onClick={() => handleProfileSubmit()}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Save Skills
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio Section */}
       <div className="w-full mb-8">
         <h2 className="text-2xl font-bold mb-4">Add New Portfolio Item</h2>
         <AdminForm
@@ -1001,9 +795,7 @@ export default function AdminContent() {
                     className="pl-4 space-y-4 mt-2"
                   >
                     <div className="p-4 border border-gray-300 rounded-md">
-                      <h3 className="font-semibold mb-2">
-                        General Information
-                      </h3>
+                      <h3 className="font-semibold mb-2">General Information</h3>
                       {editingCategoryInfo === cat ? (
                         <GeneralInfoEditor
                           initialContent={data[cat].generalInfo}

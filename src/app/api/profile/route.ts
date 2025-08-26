@@ -50,17 +50,12 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { name, bioshort, bio, avatar, socials, languages, programming } =
       body;
+    if (!name || !bioshort) {
+      return NextResponse.json({ error: "Name and short bio are required" }, { status: 400 });
+    }
 
-    if (
-      !name ||
-      !bioshort ||
-      !bio ||
-      !avatar ||
-      !Array.isArray(socials) ||
-      !Array.isArray(languages) ||
-      !Array.isArray(programming)
-    ) {
-      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    if (!Array.isArray(socials) || !Array.isArray(languages) || !Array.isArray(programming)) {
+      return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
     }
 
     const currentData = readData();
@@ -90,8 +85,8 @@ export async function PUT(req: NextRequest) {
       ...currentData,
       name,
       bioshort,
-      bio,
-      avatar,
+      bio: bio || "", // allow empty bio
+      avatar: avatar || "",
       socials,
       languages: languagesObject,
       programming: programmingObject,
