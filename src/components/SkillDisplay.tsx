@@ -43,10 +43,10 @@ export default function SkillDisplay({
   };
 
   return (
-    <div className="w-full flex flex-col gap-8 relative">
+    <div className="w-auto flex flex-col gap-6 relative">
       {showProgramming && (
         <div className="p-2">
-          {Object.keys(programming).length > 4 && (
+          {Object.keys(programming).length > 6 && (
             <div className="text-center ">
               <button
                 onClick={() => setShowAllProgramming(!showAllProgramming)}
@@ -56,10 +56,10 @@ export default function SkillDisplay({
               </button>
             </div>
           )}
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-6">
             <AnimatePresence>
               {Object.entries(programming)
-                .slice(0, showAllProgramming ? undefined : 4)
+                .slice(0, showAllProgramming ? undefined : 6)
                 .map(([tech, { level, skill }], index) => {
                   const circumference = 2 * Math.PI * radius;
                   const offset = circumference - (level / 100) * circumference;

@@ -240,34 +240,23 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-col items-center text-center mx-auto"
+        className="flex flex-col items-left mr-80 text-center"
       >
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">
+        
+        <h2 className="text-4xl font-bold mb-2 text-gray-800">
           {profile?.name || "null null"}
         </h2>
-        <img
-          src={
-            profile?.avatar ||
-            "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"
-          }
-          alt={profile?.name || "null"}
-          className="w-64 h-auto rounded-4xl mb-4 shadow-lg object-cover"
-        />
-        <div className="text-center mb-8">
+        <div className="text-left grid grid-cols-3">
+        <div className="text-left mt-2 p-10 ml-10 col-span-2">
           <p className="text-black text-2xl font-semibold mb-2">
             {profile?.bioshort || "null"}
           </p>
-          {profile?.bio && profile?.bio !== profile?.bioshort && (
-            <button
-              onClick={() => {
-                setShowFullBio((prev) => !prev);
-                scrollToTop();
-              }}
-              className="items-center font-semibold mt-2 justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
-            >
-              {showFullBio ? "Show less -" : "Read more +"}
-            </button>
-          )}
+          <div
+            className="text-lg text-gray-700 prose max-w-none prose-strong:font-bold prose-strong:text-gray-900"
+            dangerouslySetInnerHTML={{
+              __html: profile?.bio || "",
+            }}
+          />
           <div ref={bioRef}>
             <AnimatePresence>
               {showFullBio && (
@@ -279,17 +268,24 @@ export default function Home() {
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
                 >
-                  <SkillDisplay
-                    languages={profile?.languages || {}}
-                    showProgramming={false}
-                    showLanguages={true}
-                  />
                   <div
                     dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
                   />
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          </div>
+          <div className="col-3 justify-center mt-4">
+            <img
+              src={
+                profile?.avatar ||
+                "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"
+              }
+              alt={profile?.name || "null"}
+              className="w-64 h-64 object-top items-end rounded-full mb-4 shadow-lg object-cover"
+            />
           </div>
         </div>
 
@@ -322,7 +318,7 @@ export default function Home() {
   return (
     <div className="flex flex-col mt-30 mx-50 md:mx-2 md:mt-2 min-h-screen font-sans bg-gradient-to-b bg-white">
       <Element name="topOfPage" />
-      <div className="flex flex-1 flex-col md:flex-row max-w-7xl mx-auto w-full items-start">
+      <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start">
         <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center">
           <ul className="space-y-2">
             {loading ? (
