@@ -369,7 +369,7 @@ export default function Home() {
           showProgramming={true}
           showLanguages={false}
         />
-        <div className="mt-10 text-left">
+        <div className="mt-2 text-left">
           <div className="grid gap-6">
             {categories.flatMap((cat) =>
               data[cat]?.projects
@@ -399,7 +399,7 @@ export default function Home() {
     );
   };
   return (
-    <div className="flex flex-col mx-2 mt-2 font-sans bg-white print:w-full print:m-0">
+    <div className="flex w-380 flex-col mx-2 mt-2 font-sans bg-white print:w-full print:m-0">
       <Element name="topOfPage" />
       <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start print:mx-0 print:block">
         <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center print:hidden">
