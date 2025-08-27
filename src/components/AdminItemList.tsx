@@ -6,6 +6,7 @@ export interface PortfolioItem {
   title: string;
   description: string;
   year: string;
+  upfront?: boolean;
 }
 
 interface AdminItemListProps {
@@ -16,11 +17,13 @@ interface AdminItemListProps {
   editTitle: string;
   editYear: string;
   editDescription: string;
+  editUpfront: boolean;
   onStartEditing: (item: PortfolioItem) => void;
   onDelete: (id: string) => void;
   onEditCategoryChange: (value: string) => void;
   onEditTitleChange: (value: string) => void;
   onEditYearChange: (value: string) => void;
+  onEditUpfrontChange: (value: boolean) => void;
   onEditSubmit: (e: React.FormEvent, id: string, description: string) => void;
   onCancelEdit: () => void;
 }
@@ -33,11 +36,13 @@ export default function AdminItemList({
   editTitle,
   editYear,
   editDescription,
+  editUpfront,
   onStartEditing,
   onDelete,
   onEditCategoryChange,
   onEditTitleChange,
   onEditYearChange,
+  onEditUpfrontChange,
   onEditSubmit,
   onCancelEdit,
 }: AdminItemListProps) {
@@ -52,10 +57,12 @@ export default function AdminItemList({
               title={editTitle}
               year={editYear}
               description={editDescription}
+              upfront={editUpfront}
               existingCategories={existingCategories}
               onCategoryChange={onEditCategoryChange}
               onTitleChange={onEditTitleChange}
               onYearChange={onEditYearChange}
+              onUpfrontChange={onEditUpfrontChange}
               onSubmit={(e, description) => onEditSubmit(e, item.id, description)}
               onCancel={onCancelEdit}
             />
@@ -69,6 +76,9 @@ export default function AdminItemList({
               </p>
               <p>
                 <strong>Year:</strong> {item.year}
+              </p>
+              <p>
+                <strong>Upfront:</strong> {item.upfront ? "✅ Yes" : "❌ No"}
               </p>
               <div
                 className="text-lg text-gray-700"

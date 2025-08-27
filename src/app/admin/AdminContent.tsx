@@ -13,6 +13,7 @@ export interface PortfolioItem {
   title: string;
   description: string;
   year: string;
+  upfront?: boolean;
 }
 
 interface LanguageItem {
@@ -50,12 +51,14 @@ export default function AdminContent() {
   const [newCategory, setNewCategory] = useState<string>("");
   const [newTitle, setNewTitle] = useState<string>("");
   const [newYear, setNewYear] = useState<string>("");
+  const [newUpfront, setNewUpfront] = useState<boolean>(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState<string>("");
   const [editTitle, setEditTitle] = useState<string>("");
   const [editDescription, setEditDescription] = useState<string>("");
   const [editYear, setEditYear] = useState<string>("");
+  const [editUpfront, setEditUpfront] = useState<boolean>(false);
 
   const [profile, setProfile] = useState<{
     name: string;
@@ -79,10 +82,8 @@ export default function AdminContent() {
     ProgrammingItem[]
   >([]);
 
-  // Ref for Bio editor
   const bioEditorRef = useRef<GeneralInfoEditorRef>(null);
 
-  // Tab state
   const [currentTab, setCurrentTab] = useState<"profile" | "skills">("profile");
 
   useEffect(() => {
@@ -193,7 +194,6 @@ export default function AdminContent() {
     }
   };
 
-  // Socials
   const addSocial = () => {
     setProfileSocials([...profileSocials, { platform: "", url: "" }]);
   };
@@ -210,7 +210,6 @@ export default function AdminContent() {
     setProfileSocials(profileSocials.filter((_, i) => i !== index));
   };
 
-  // Languages
   const addLanguage = () => {
     setProfileLanguages([
       ...profileLanguages,
@@ -252,7 +251,6 @@ export default function AdminContent() {
     setProfileLanguages(profileLanguages.filter((_, i) => i !== index));
   };
 
-  // Programming
   const addProgramming = () => {
     setProfileProgramming([
       ...profileProgramming,
@@ -276,7 +274,6 @@ export default function AdminContent() {
     setProfileProgramming(profileProgramming.filter((_, i) => i !== index));
   };
 
-  // Portfolio CRUD (unchanged)
   const handleAddSubmit = async (e: React.FormEvent, description: string) => {
     e.preventDefault();
     if (!newCategory) {
@@ -291,12 +288,14 @@ export default function AdminContent() {
         title: newTitle,
         description,
         year: newYear,
+        upfront: newUpfront,
       }),
     });
     if (res.ok) {
       setNewCategory("");
       setNewTitle("");
       setNewYear("");
+      setNewUpfront(false);
       fetchData();
     } else {
       alert("Failed to add item");
@@ -309,6 +308,7 @@ export default function AdminContent() {
     setEditTitle(item.title);
     setEditDescription(item.description);
     setEditYear(item.year || "");
+    setEditUpfront(item.upfront ?? false);
   };
 
   const handleEditSubmit = async (
@@ -325,6 +325,7 @@ export default function AdminContent() {
         title: editTitle,
         description,
         year: editYear,
+        upfront: editUpfront,
       }),
     });
     if (res.ok) {
@@ -444,8 +445,6 @@ export default function AdminContent() {
   return (
     <div className="flex flex-col items-center justify-center p-8 bg-white rounded shadow-md max-w-5xl w-full">
       <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
-
-      {/* Tab Navigation */}
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setCurrentTab("profile")}
@@ -468,8 +467,6 @@ export default function AdminContent() {
           Languages & Skills
         </button>
       </div>
-
-      {/* Profile Tab */}
       {currentTab === "profile" && (
         <div className="w-full mb-8">
           <h2 className="text-2xl font-bold mb-4">Settings - Profile</h2>
@@ -620,13 +617,9 @@ export default function AdminContent() {
           )}
         </div>
       )}
-
-      {/* Skills Tab */}
       {currentTab === "skills" && (
         <div className="w-full mb-8">
           <h2 className="text-2xl font-bold mb-4">Languages & Programming Skills</h2>
-
-          {/* Languages */}
           <div>
             <h3 className="font-semibold mb-2">Languages</h3>
             {profileLanguages.map((language, index) => (
@@ -687,8 +680,6 @@ export default function AdminContent() {
               Add Language
             </button>
           </div>
-
-          {/* Programming */}
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Programming Languages & Technologies</h3>
             {profileProgramming.map((programming, index) => (
@@ -731,8 +722,6 @@ export default function AdminContent() {
               Add Programming
             </button>
           </div>
-
-          {/* Save Button */}
           <div className="flex gap-2 mt-4">
             <button
               type="button"
@@ -744,8 +733,6 @@ export default function AdminContent() {
           </div>
         </div>
       )}
-
-      {/* Portfolio Section */}
       <div className="w-full mb-8">
         <h2 className="text-2xl font-bold mb-4">Add New Portfolio Item</h2>
         <AdminForm
@@ -754,10 +741,12 @@ export default function AdminContent() {
           title={newTitle}
           year={newYear}
           description=""
+          upfront={newUpfront}
           existingCategories={categories}
           onCategoryChange={setNewCategory}
           onTitleChange={setNewTitle}
           onYearChange={setNewYear}
+          onUpfrontChange={setNewUpfront}
           onSubmit={handleAddSubmit}
         />
       </div>
@@ -832,11 +821,13 @@ export default function AdminContent() {
                       editTitle={editTitle}
                       editYear={editYear}
                       editDescription={editDescription}
+                      editUpfront={editUpfront}
                       onStartEditing={(item) => startEditing(item, cat)}
                       onDelete={(id) => handleDelete(id, cat)}
                       onEditCategoryChange={setEditCategory}
                       onEditTitleChange={setEditTitle}
                       onEditYearChange={setEditYear}
+                      onEditUpfrontChange={setEditUpfront}
                       onEditSubmit={handleEditSubmit}
                       onCancelEdit={() => setEditingId(null)}
                     />

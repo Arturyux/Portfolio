@@ -24,10 +24,12 @@ interface AdminFormProps {
   title: string;
   year: string;
   description: string;
+  upfront: boolean;
   existingCategories: string[];
   onCategoryChange: (value: string) => void;
   onTitleChange: (value: string) => void;
   onYearChange: (value: string) => void;
+  onUpfrontChange: (value: boolean) => void;
   onSubmit: (e: FormEvent, description: string) => void;
   onCancel?: () => void;
 }
@@ -38,10 +40,12 @@ export default function AdminForm({
   title,
   year,
   description,
+  upfront,
   existingCategories,
   onCategoryChange,
   onTitleChange,
   onYearChange,
+  onUpfrontChange,
   onSubmit,
   onCancel,
 }: AdminFormProps) {
@@ -182,6 +186,17 @@ export default function AdminForm({
         className="px-3 py-2 border border-gray-300 rounded-md"
         required
       />
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={upfront}
+          onChange={(e) => onUpfrontChange(e.target.checked)}
+          id="upfront"
+        />
+        <label htmlFor="upfront" className="text-sm text-gray-700">
+          Show Upfront
+        </label>
+      </div>
       <div className="flex space-x-2 mb-2 flex-wrap">
         <button
           type="button"
