@@ -240,42 +240,49 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-col items-left mr-80 text-center"
+        className="flex flex-col items-left mr-75 text-center print:w-full print:m-0"
       >
-        
+        <motion.button
+          onClick={() => window.print()}
+          onMouseEnter={() => handleCategoryHover("",true)}
+          onMouseLeave={() => handleCategoryHover("", false)}
+          animate={{ scale: categoryScales[""] || 1 }}
+          className="text-white w-64 print:hidden bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2"
+        >
+          Print Portfolio
+        </motion.button>
         <h2 className="text-4xl font-bold mb-2 text-gray-800">
           {profile?.name || "null null"}
         </h2>
         <div className="text-left grid grid-cols-3">
-        <div className="text-left mt-2 p-10 ml-10 col-span-2">
-          <p className="text-black text-2xl font-semibold mb-2">
-            {profile?.bioshort || "null"}
-          </p>
-          <div
-            className="text-lg text-gray-700 prose max-w-none prose-strong:font-bold prose-strong:text-gray-900"
-            dangerouslySetInnerHTML={{
-              __html: profile?.bio || "",
-            }}
-          />
-          <div ref={bioRef}>
-            <AnimatePresence>
-              {showFullBio && (
-                <motion.div
-                  key="full-bio"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
-                >
-                  <div
-                    dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
+          <div className="text-left mt-2 p-7 ml-10 col-span-2 print:p-2 print:ml-2">
+            <p className="text-black text-2xl font-semibold mb-2">
+              {profile?.bioshort || "null"}
+            </p>
+            <div
+              className="text-lg text-gray-700 prose max-w-none prose-strong:font-bold prose-strong:text-gray-900"
+              dangerouslySetInnerHTML={{
+                __html: profile?.bio || "",
+              }}
+            />
+            <div ref={bioRef}>
+              <AnimatePresence>
+                {showFullBio && (
+                  <motion.div
+                    key="full-bio"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
           <div className="col-3 justify-center mt-4">
             <img
@@ -288,8 +295,7 @@ export default function Home() {
             />
           </div>
         </div>
-
-        <div className="flex justify-center space-x-4 mb-6 flex-wrap">
+        <div className="flex justify-center space-x-4 mb-6">
           {profile?.socials?.map((social, index) => (
             <a
               key={index}
@@ -300,9 +306,10 @@ export default function Home() {
             >
               <FontAwesomeIcon
                 icon={getSocialIcon(social.platform)}
-                className="text-2xl mr-1"
-              />{" "}
-              {social.platform}
+                className="text-xl mr-1"
+              />
+              <span className="hidden print:block">{social.url}</span>
+              <span className="block print:hidden">{social.platform}</span>
             </a>
           ))}
         </div>
@@ -316,10 +323,11 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col mt-30 mx-50 md:mx-2 md:mt-2 min-h-screen font-sans bg-gradient-to-b bg-white">
+    <div className="flex flex-col mx-2 mt-2 font-sans bg-white print:w-full print:m-0">
       <Element name="topOfPage" />
-      <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start">
-        <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center">
+      
+      <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start print:mx-0 print:block">
+        <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center print:hidden">
           <ul className="space-y-2">
             {loading ? (
               <li className="text-gray-500">Loading categories...</li>
@@ -389,7 +397,7 @@ export default function Home() {
           <AnimatePresence mode="wait">{renderMainContent()}</AnimatePresence>
         </main>
       </div>
-      <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm">
+      <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm print:hidden">
         <div className="max-w-7xl mx-auto px-4">
           <p>&copy; 2025 by Artur Burlakin</p>
         </div>

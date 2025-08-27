@@ -17,3 +17,38 @@ body {
 .prose p:empty::before {
   content: "\00a0";
 }
+
+@media print {
+  nav,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .flex {
+    display: block !important;
+  }
+
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+
+  body,
+  html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .prose {
+    max-width: 100% !important;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+}
