@@ -59,8 +59,12 @@ export default function AdminContent() {
   const [editDescription, setEditDescription] = useState<string>("");
   const [editYear, setEditYear] = useState<string>("");
   const [editUpfront, setEditUpfront] = useState<boolean>(false);
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
 
   const [profile, setProfile] = useState<{
+    email: string;
+    phone: string;
     name: string;
     bioshort: string;
     bio: string;
@@ -120,6 +124,8 @@ export default function AdminContent() {
       setProfileBio(profileData.bio);
       setProfileAvatar(profileData.avatar);
       setProfileSocials(profileData.socials || []);
+      setProfileEmail(profileData.email || "");
+      setProfilePhone(profileData.phone || ""); 
 
       const languagesArray = profileData.languages
         ? Object.entries(profileData.languages).map(
@@ -183,6 +189,8 @@ export default function AdminContent() {
         socials: profileSocials,
         languages: profileLanguages,
         programming: profileProgramming,
+        email: profileEmail,
+        phone: profilePhone,
       }),
     });
     if (res.ok) {
@@ -522,6 +530,30 @@ export default function AdminContent() {
                   />
                 </div>
                 <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={profileEmail}
+                  onChange={(e) => setProfileEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  placeholder="+46 70 123 45 67"
+                  className="px-3 py-2 border border-gray-300 rounded-md w-full"
+                />
+              </div>
+                <div>
                   <h3 className="font-semibold mb-2">Social Links</h3>
                   {profileSocials.map((social, index) => (
                     <div key={index} className="flex gap-2 mb-2 items-end">
@@ -591,6 +623,12 @@ export default function AdminContent() {
                     dangerouslySetInnerHTML={{ __html: profile.bio }}
                   />
                 </div>
+                <p>
+                  <strong>Email:</strong> {profile.email}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {profile.phone}
+                </p>
                 <p>
                   <strong>Avatar:</strong> {profile.avatar}
                 </p>

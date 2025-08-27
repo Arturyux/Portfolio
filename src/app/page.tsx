@@ -15,6 +15,7 @@ import {
   faTiktok,
   faReddit,
 } from "@fortawesome/free-brands-svg-icons";
+import { faEnvelope, faPhone } from "@fortawesome/free-solid-svg-icons";
 import { Element, scroller } from "react-scroll";
 import SkillDisplay from "@/components/SkillDisplay";
 
@@ -23,6 +24,7 @@ interface PortfolioItem {
   title: string;
   description: string;
   year: string;
+  upfront?: boolean;
 }
 
 interface CategoryData {
@@ -35,7 +37,9 @@ interface ProfileData {
   bio: string;
   bioshort: string;
   avatar: string;
-  socials: { platform: string; url: string }[];
+  socials: { platform: string; url: string; }[];
+  phone: string;
+  email: string;
   languages: {
     [language: string]: {
       reading: number;
@@ -295,37 +299,108 @@ export default function Home() {
             />
           </div>
         </div>
-        <div className="flex justify-center space-x-4 mb-6">
-          {profile?.socials?.map((social, index) => (
-            <a
-              key={index}
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-800 hover:text-blue-600 flex text-xl items-center mx-2"
-            >
-              <FontAwesomeIcon
-                icon={getSocialIcon(social.platform)}
-                className="text-xl mr-1"
-              />
-              <span className="hidden print:block">{social.url}</span>
-              <span className="block print:hidden">{social.platform}</span>
-            </a>
-          ))}
+          <div className="flex justify-center items-center gap-6 mb-6 print:hidden">
+            {profile?.email && (
+              <a
+                href={`mailto:${profile.email}`}
+                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
+              >
+                <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                {profile.email}
+              </a>
+            )}
+            {profile?.phone && (
+              <a
+                href={`tel:${profile.phone}`}
+                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
+              >
+                <FontAwesomeIcon icon={faPhone} className="mr-2" />
+                {profile.phone}
+              </a>
+            )}
+            {profile?.socials?.map((social, index) => (
+              <a
+                key={index}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
+              >
+                <FontAwesomeIcon
+                  icon={getSocialIcon(social.platform)}
+                  className="mr-2"
+                />
+                {social.platform}
+              </a>
+            ))}
+          </div>
+        <div className="hidden print:grid grid-cols-2 gap-4 mb-6">
+          <div className="flex flex-col space-y-2">
+            {profile?.email && (
+              <div className="flex items-center text-gray-800 text-lg">
+                <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                {profile.email}
+              </div>
+            )}
+            {profile?.phone && (
+              <div className="flex items-center text-gray-800 text-lg">
+                <FontAwesomeIcon icon={faPhone} className="mr-2" />
+                {profile.phone}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col space-y-2">
+            {profile?.socials?.map((social, index) => (
+              <div
+                key={index}
+                className="flex items-center text-gray-800 text-lg break-all"
+              >
+                <FontAwesomeIcon
+                  icon={getSocialIcon(social.platform)}
+                  className="mr-2"
+                />
+                {social.url}
+              </div>
+            ))}
+          </div>
         </div>
         <SkillDisplay
           programming={profile?.programming || {}}
           showProgramming={true}
           showLanguages={false}
         />
+        <div className="mt-10 text-left">
+          <div className="grid gap-6">
+            {categories.flatMap((cat) =>
+              data[cat]?.projects
+                .filter((p) => p.upfront)
+                .map((p) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="p-4 bg-white"
+                  >
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                      {p.title}{" "}
+                      <span className="text-gray-500">({p.year})</span>
+                    </h3>
+                    <div
+                      className="text-gray-700 prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: p.description }}
+                    />
+                  </motion.div>
+                ))
+            )}
+          </div>
+        </div>
       </motion.div>
     );
   };
-
   return (
     <div className="flex flex-col mx-2 mt-2 font-sans bg-white print:w-full print:m-0">
       <Element name="topOfPage" />
-      
       <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start print:mx-0 print:block">
         <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center print:hidden">
           <ul className="space-y-2">

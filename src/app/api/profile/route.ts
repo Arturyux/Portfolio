@@ -14,7 +14,7 @@ interface LanguageItem {
 }
 
 interface ProgrammingItem {
-  lang:string;
+  lang: string;
   level: number;
   skills: string;
 }
@@ -30,6 +30,8 @@ function readData() {
       bioshort: "",
       bio: "",
       avatar: "",
+      email: "",
+      phone: "",
       socials: [],
       languages: {},
       programming: {},
@@ -48,14 +50,34 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, bioshort, bio, avatar, socials, languages, programming } =
-      body;
+    const {
+      name,
+      bioshort,
+      bio,
+      avatar,
+      socials,
+      languages,
+      programming,
+      email,
+      phone,
+    } = body;
+
     if (!name || !bioshort) {
-      return NextResponse.json({ error: "Name and short bio are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Name and short bio are required" },
+        { status: 400 }
+      );
     }
 
-    if (!Array.isArray(socials) || !Array.isArray(languages) || !Array.isArray(programming)) {
-      return NextResponse.json({ error: "Invalid data format" }, { status: 400 });
+    if (
+      !Array.isArray(socials) ||
+      !Array.isArray(languages) ||
+      !Array.isArray(programming)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid data format" },
+        { status: 400 }
+      );
     }
 
     const currentData = readData();
@@ -85,8 +107,10 @@ export async function PUT(req: NextRequest) {
       ...currentData,
       name,
       bioshort,
-      bio: bio || "", // allow empty bio
+      bio: bio || "",
       avatar: avatar || "",
+      email: email || "",
+      phone: phone || "",
       socials,
       languages: languagesObject,
       programming: programmingObject,
