@@ -62,6 +62,7 @@ export default function AdminContent() {
   const [editYear, setEditYear] = useState<string>("");
   const [editUpfront, setEditUpfront] = useState<boolean>(false);
   const [editQueuenumber, setEditQueuenumber] = useState<number>(0);
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
@@ -348,6 +349,7 @@ export default function AdminContent() {
     });
     if (res.ok) {
       setEditingId(null);
+      setExpandedProject(null);
       fetchData();
     } else {
       alert("Failed to edit item");
@@ -398,12 +400,23 @@ export default function AdminContent() {
   };
 
   const toggleCategory = (cat: string) => {
+    setExpandedProject(null);
     setExpandedCategories((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(cat)) newSet.delete(cat);
       else newSet.add(cat);
       return newSet;
     });
+  };
+  
+  const toggleProject = (id: string) => {
+    if (editingId === id) return;
+    setExpandedProject(prev => (prev === id ? null : id));
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setExpandedProject(null);
   };
 
   const startEditingProfile = () => {
@@ -897,6 +910,7 @@ export default function AdminContent() {
                                     <AdminItemList
                                         items={data[cat].projects.map((item) => ({...item, category: cat}))}
                                         editingId={editingId}
+                                        expandedProject={expandedProject}
                                         existingCategories={categories}
                                         editCategory={editCategory}
                                         editTitle={editTitle}
@@ -906,13 +920,14 @@ export default function AdminContent() {
                                         editQueuenumber={editQueuenumber}
                                         onStartEditing={(item) => startEditing(item, cat)}
                                         onDelete={(id) => handleDelete(id, cat)}
+                                        onToggleProject={toggleProject}
                                         onEditCategoryChange={setEditCategory}
                                         onEditTitleChange={setEditTitle}
                                         onEditYearChange={setEditYear}
                                         onEditUpfrontChange={setEditUpfront}
                                         onEditQueuenumberChange={setEditQueuenumber}
                                         onEditSubmit={handleEditSubmit}
-                                        onCancelEdit={() => setEditingId(null)}
+                                        onCancelEdit={handleCancelEdit}
                                     />
                                     </motion.div>
                                 )}
