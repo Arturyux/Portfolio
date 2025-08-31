@@ -226,11 +226,11 @@ export default function Home() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">
               {selectedItem.title} ({selectedItem.year || ""})
             </h2>
             <div
-              className="text-lg text-gray-700 prose max-w-none"
+              className="text-base md:text-lg text-gray-700 prose max-w-none"
               dangerouslySetInnerHTML={{
                 __html: selectedItem.description,
               }}
@@ -248,11 +248,11 @@ export default function Home() {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">
             General Information on {activeCategory}
           </h2>
           <div
-            className="text-lg text-gray-700 prose max-w-none"
+            className="text-base md:text-lg text-gray-700 prose max-w-none"
             dangerouslySetInnerHTML={{
               __html: data[activeCategory].generalInfo,
             }}
@@ -267,7 +267,7 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-col items-left mr-75 text-center print:w-full print:m-0"
+        className="flex flex-col items-center md:items-left mr-0 md:mr-75 print:w-full print:m-0"
       >
         <motion.button
           onClick={() => window.print()}
@@ -278,113 +278,64 @@ export default function Home() {
         >
           Print Portfolio
         </motion.button>
-        <h2 className="text-4xl font-bold mb-2 text-gray-800">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-800">
           {profile?.name || "null null"}
         </h2>
-        <div className="text-left grid grid-cols-3">
-          <div className="text-left mt-2 p-7 ml-10 col-span-2 print:p-2 print:ml-2">
-            <p className="text-black text-2xl font-semibold mb-2">
-              {profile?.bioshort || "null"}
-            </p>
-            <div
-              className="text-lg text-gray-700 prose max-w-none prose-strong:font-bold prose-strong:text-gray-900"
-              dangerouslySetInnerHTML={{
-                __html: profile?.bio || "",
-              }}
-            />
-            <div ref={bioRef}>
-              <AnimatePresence>
-                {showFullBio && (
-                  <motion.div
-                    key="full-bio"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="overflow-hidden mt-4 text-gray-700 text-base max-w-2xl mx-auto prose text-left"
-                  >
-                    <div
-                      dangerouslySetInnerHTML={{ __html: profile?.bio || "" }}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        <div className="text-left grid grid-cols-1 lg:grid-cols-3 w-full">
+            <div className="lg:text-left text-center order-2 lg:order-1 lg:mt-2 mt-0 lg:col-span-2 lg:p-7 p-4 print:p-2 print:ml-2 print:order-0">
+                <p className="text-black text-xl sm:text-2xl font-semibold mb-2">
+                    {profile?.bioshort || "null"}
+                </p>
+                <div
+                className="text-base md:text-lg text-gray-700 prose max-w-none prose-strong:font-bold prose-strong:text-gray-900"
+                dangerouslySetInnerHTML={{
+                    __html: profile?.bio || "null",
+                }}
+                />
             </div>
-          </div>
-          <div className="col-3 justify-center mt-4">
-            <img
-              src={
-                profile?.avatar ||
-                "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"
-              }
-              alt={profile?.name || "null"}
-              className="w-64 h-64 object-top items-end rounded-full mb-4 shadow-lg object-cover"
-            />
-          </div>
+            <div className="order-1 lg:order-2 flex mt-0 lg:mt-4 justify-center items-center p-4 print:col-3 print:order-0">
+                <img
+                src={profile?.avatar || "https://commons.wikimedia.org/wiki/File:No-Image-Placeholder.svg"}
+                alt={profile?.name || "Avatar"}
+                className="w-48 h-48 md:w-64 md:h-64 object-top items-end mb-4 md:mb-0 rounded-full shadow-lg object-cover"
+                />
+            </div>
         </div>
-          <div className="flex justify-center items-center gap-6 mb-6 print:hidden">
-            {profile?.email && (
-              <a
-                href={`mailto:${profile.email}`}
-                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
-              >
-                <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
-                {profile.email}
-              </a>
-            )}
-            {profile?.phone && (
-              <a
-                href={`tel:${profile.phone}`}
-                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
-              >
-                <FontAwesomeIcon icon={faPhone} className="mr-2" />
-                {profile.phone}
-              </a>
-            )}
-            {profile?.socials?.map((social, index) => (
-              <a
-                key={index}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="items-center text-gray-800 hover:text-blue-600 text-lg print:hidden"
-              >
-                <FontAwesomeIcon
-                  icon={getSocialIcon(social.platform)}
-                  className="mr-2"
-                />
-                {social.platform}
-              </a>
-            ))}
-          </div>
-        <div className="hidden print:grid grid-cols-2 gap-4 mb-6">
-          <div className="flex flex-col space-y-2">
-            {profile?.email && (
-              <div className="flex items-center text-gray-800 text-lg">
-                <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
-                {profile.email}
-              </div>
-            )}
-            {profile?.phone && (
-              <div className="flex items-center text-gray-800 text-lg">
-                <FontAwesomeIcon icon={faPhone} className="mr-2" />
-                {profile.phone}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col space-y-2">
-            {profile?.socials?.map((social, index) => (
-              <div
-                key={index}
-                className="flex items-center text-gray-800 text-lg break-all"
-              >
-                <FontAwesomeIcon
-                  icon={getSocialIcon(social.platform)}
-                  className="mr-2"
-                />
-                {social.url}
-              </div>
-            ))}
+        <div className="print:hidden w-full">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-6 mb-6 print:hidden">
+              {profile?.email && (
+                <a
+                  href={`mailto:${profile.email}`}
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                  {profile.email}
+                </a>
+              )}
+              {profile?.phone && (
+                <a
+                  href={`tel:${profile.phone}`}
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon icon={faPhone} className="mr-2" />
+                  {profile.phone}
+                </a>
+              )}
+              {profile?.socials?.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon
+                    icon={getSocialIcon(social.platform)}
+                    className="mr-2"
+                  />
+                  {social.platform}
+                </a>
+              ))}
           </div>
         </div>
         <SkillDisplay
@@ -402,7 +353,7 @@ export default function Home() {
                 transition={{ duration: 0.3 }}
                 className="p-4 bg-white"
               >
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
                   {p.title}{" "}
                   <span className="text-gray-500">({p.year})</span>
                 </h3>
@@ -418,10 +369,10 @@ export default function Home() {
     );
   };
   return (
-    <div className="flex w-380 flex-col mx-2 mt-2 font-sans bg-white print:w-full print:m-0">
+    <div className="bg-white print:w-full print:m-0">
       <Element name="topOfPage" />
-      <div className="flex flex-1 flex-col md:flex-row mx-auto w-full items-start print:mx-0 print:block">
-        <nav className="bg-white md:w-80 flex-shrink-0 p-6 md:border-r border-gray-200 overflow-y-auto md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center print:hidden">
+      <div className="flex flex-1 flex-col md:flex-row w-full mx-auto items-start print:mx-0 print:block">
+        <nav className=" md:w-80 w-full row-span-3 flex-shrink-0 p-4 md:p-6 md:border-r border-gray-200 md:sticky md:top-0 md:h-screen md:flex md:flex-col md:justify-center print:hidden">
           <ul className="space-y-2">
             {loading ? (
               <li className="text-gray-500">Loading categories...</li>
@@ -472,7 +423,7 @@ export default function Home() {
                                 duration: 0.2,
                                 ease: "easeInOut",
                               }}
-                              className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700"
+                              className="w-full flex items-center justify-between px-4 py-2 rounded-full transition-colors border border-gray-200 bg-white text-gray-700 text-sm"
                             >
                               <span>{item.title}</span>
                               {item.year && <span>({item.year})</span>}
@@ -493,7 +444,7 @@ export default function Home() {
       </div>
       <footer className="bg-white py-6 w-full text-center text-gray-600 text-sm print:hidden">
         <div className="max-w-7xl mx-auto px-4">
-          <p>&copy; 2025 by Artur Burlakin</p>
+          <p>&copy; {new Date().getFullYear()} by Artur Burlakin</p>
         </div>
       </footer>
     </div>
