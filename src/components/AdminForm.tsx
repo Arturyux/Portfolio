@@ -25,11 +25,13 @@ interface AdminFormProps {
   year: string;
   description: string;
   upfront: boolean;
+  queuenumber: number;
   existingCategories: string[];
   onCategoryChange: (value: string) => void;
   onTitleChange: (value: string) => void;
   onYearChange: (value: string) => void;
   onUpfrontChange: (value: boolean) => void;
+  onQueuenumberChange: (value: number) => void;
   onSubmit: (e: FormEvent, description: string) => void;
   onCancel?: () => void;
 }
@@ -41,11 +43,13 @@ export default function AdminForm({
   year,
   description,
   upfront,
+  queuenumber,
   existingCategories,
   onCategoryChange,
   onTitleChange,
   onYearChange,
   onUpfrontChange,
+  onQueuenumberChange,
   onSubmit,
   onCancel,
 }: AdminFormProps) {
@@ -101,10 +105,8 @@ export default function AdminForm({
         setIsH2(editor.isActive("heading", { level: 2 }));
         setIsH3(editor.isActive("heading", { level: 3 }));
       };
-
       editor.on("selectionUpdate", updateStates);
       editor.on("transaction", updateStates);
-
       return () => {
         editor.off("selectionUpdate", updateStates);
         editor.off("transaction", updateStates);
@@ -115,11 +117,10 @@ export default function AdminForm({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const finalCategory = showNewCategoryInput ? newCategoryValue : category;
-    if (!finalCategory) {
+    if (!isEdit && !finalCategory) {
       alert("Please select or enter a category");
       return;
     }
-    onCategoryChange(finalCategory);
     onSubmit(e, editor?.getHTML() || "");
   };
 
@@ -146,28 +147,45 @@ export default function AdminForm({
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
       <div className="flex flex-col gap-2">
-        <select
-          value={category}
-          onChange={handleCategorySelect}
-          className="px-3 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="">Select Category</option>
-          {existingCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-          <option value="new">Add New Category</option>
-        </select>
-        {showNewCategoryInput && (
-          <input
-            type="text"
-            value={newCategoryValue}
-            onChange={(e) => setNewCategoryValue(e.target.value)}
-            placeholder="New Category Name"
-            className="px-3 py-2 border border-gray-300 rounded-md"
-            required
-          />
+        {isEdit ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category (cannot be changed)</label>
+              <input
+                type="text"
+                value={category}
+                disabled
+                className="px-3 py-2 border border-gray-300 rounded-md w-full bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+          ) : (
+            <>
+              <select
+                value={category}
+                onChange={handleCategorySelect}
+                className="px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select Category</option>
+                {existingCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                <option value="new">Add New Category</option>
+              </select>
+              {showNewCategoryInput && (
+                <input
+                  type="text"
+                  value={newCategoryValue}
+                  onChange={(e) => {
+                      setNewCategoryValue(e.target.value);
+                      onCategoryChange(e.target.value);
+                  }}
+                  placeholder="New Category Name"
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              )}
+            </>
         )}
       </div>
       <input
@@ -182,18 +200,25 @@ export default function AdminForm({
         type="text"
         value={year}
         onChange={(e) => onYearChange(e.target.value)}
-        placeholder="Year (e.g., 2023)"
+        placeholder="Year (e.g., 2023 or 2023-2022)"
         className="px-3 py-2 border border-gray-300 rounded-md"
         required
+      />
+      <input
+        type="number"
+        value={queuenumber}
+        onChange={(e) => onQueuenumberChange(Number(e.target.value))}
+        placeholder="Order (e.g., 1, 2, 3)"
+        className="px-3 py-2 border border-gray-300 rounded-md"
       />
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
           checked={upfront}
           onChange={(e) => onUpfrontChange(e.target.checked)}
-          id="upfront"
+          id={`upfront-${isEdit}`}
         />
-        <label htmlFor="upfront" className="text-sm text-gray-700">
+        <label htmlFor={`upfront-${isEdit}`} className="text-sm text-gray-700">
           Show Upfront
         </label>
       </div>
@@ -335,7 +360,7 @@ export default function AdminForm({
           type="submit"
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          {isEdit ? "Save" : "Add Item"}
+          {isEdit ? "Save Changes" : "Add Item"}
         </button>
         {isEdit && onCancel && (
           <button

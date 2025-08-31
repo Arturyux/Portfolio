@@ -5,17 +5,20 @@ import crypto from "crypto";
 
 const filePath = path.join(process.cwd(), "public", "data", "portfolio.json");
 
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  year: string;
+  upfront?: boolean;
+  queuenumber?: number;
+}
+
 function readData(): Record<
   string,
   {
     generalInfo: string;
-    projects: Array<{
-      id: string;
-      title: string;
-      description: string;
-      year: string;
-      upfront?: boolean;
-    }>;
+    projects: Project[];
   }
 > {
   const fileData = fs.readFileSync(filePath, "utf-8");
@@ -27,13 +30,7 @@ function writeData(
     string,
     {
       generalInfo: string;
-      projects: Array<{
-        id: string;
-        title: string;
-        description: string;
-        year: string;
-        upfront?: boolean;
-      }>;
+      projects: Project[];
     }
   >
 ) {
@@ -43,14 +40,23 @@ function writeData(
 export async function GET(req: NextRequest) {
   const data = readData();
   Object.keys(data).forEach((cat) => {
-    data[cat].projects.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+    data[cat].projects.sort((a, b) => {
+      const queueA = a.queuenumber ?? 0;
+      const queueB = b.queuenumber ?? 0;
+      if (queueA !== queueB) {
+        return queueA - queueB;
+      }
+      const yearA = parseInt(a.year.split('-')[0], 10);
+      const yearB = parseInt(b.year.split('-')[0], 10);
+      return yearB - yearA;
+    });
   });
   return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { category, title, description, year, upfront = false } = body;
+  const { category, title, description, year, upfront = false, queuenumber = 0 } = body;
 
   if (!category || !title || !description || !year) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -67,6 +73,7 @@ export async function POST(req: NextRequest) {
     description,
     year,
     upfront,
+    queuenumber: Number(queuenumber),
   };
 
   data[category].projects.push(newItem);
@@ -78,7 +85,6 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   const type = req.nextUrl.searchParams.get("type");
-
   const body = await req.json();
   const data = readData();
 
@@ -97,25 +103,43 @@ export async function PUT(req: NextRequest) {
     }
     writeData(data);
     return NextResponse.json({ success: true });
-  } else {
-    if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
-    }
-    const { category, title, description, year, upfront = false } = body;
-    if (!category || !title || !description || !year) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    }
-    if (!data[category]) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 });
-    }
-    const index = data[category].projects.findIndex((item) => item.id === id);
-    if (index === -1) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
-    }
-    data[category].projects[index] = { id, title, description, year, upfront,};
-    writeData(data);
-    return NextResponse.json(data[category].projects[index]);
   }
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+  
+  const { title, description, year, upfront, queuenumber } = body;
+
+  let originalCategory = "";
+  let itemIndex = -1;
+
+  for (const cat in data) {
+    const index = data[cat].projects.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      originalCategory = cat;
+      itemIndex = index;
+      break;
+    }
+  }
+
+  if (itemIndex === -1) {
+    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  }
+
+  const updatedItem = {
+    ...data[originalCategory].projects[itemIndex],
+    title,
+    description,
+    year,
+    upfront,
+    queuenumber: Number(queuenumber ?? 0),
+  };
+
+  data[originalCategory].projects[itemIndex] = updatedItem;
+
+  writeData(data);
+  return NextResponse.json(updatedItem);
 }
 
 export async function DELETE(req: NextRequest) {

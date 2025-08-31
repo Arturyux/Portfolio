@@ -25,6 +25,7 @@ interface PortfolioItem {
   description: string;
   year: string;
   upfront?: boolean;
+  queuenumber?: number;
 }
 
 interface CategoryData {
@@ -188,6 +189,28 @@ export default function Home() {
   const getSocialIcon = (platform: string) => {
     return socialIcons[platform.toLowerCase()] || faLink;
   };
+
+  const allUpfrontProjects = categories
+    .flatMap((cat) => data[cat]?.projects.filter((p) => p.upfront));
+  
+  const upfrontProjects = Array.from(new Map(allUpfrontProjects.map(item => [item.id, item])).values())
+    .sort((a, b) => {
+      const queueA = a.queuenumber ?? 0;
+      const queueB = b.queuenumber ?? 0;
+
+      if (queueA > 0 && queueB === 0) return -1;
+      if (queueA === 0 && queueB > 0) return 1;
+
+      if (queueA > 0 && queueB > 0) {
+        if (queueA !== queueB) {
+          return queueB - queueA;
+        }
+      }
+
+      const yearA = parseInt(a.year.split('-')[0], 10);
+      const yearB = parseInt(b.year.split('-')[0], 10);
+      return yearB - yearA;
+    });
 
   const renderMainContent = () => {
     if (activeProject && activeCategory && data[activeCategory]) {
@@ -371,28 +394,24 @@ export default function Home() {
         />
         <div className="mt-2 text-left">
           <div className="grid gap-6">
-            {categories.flatMap((cat) =>
-              data[cat]?.projects
-                .filter((p) => p.upfront)
-                .map((p) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="p-4 bg-white"
-                  >
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                      {p.title}{" "}
-                      <span className="text-gray-500">({p.year})</span>
-                    </h3>
-                    <div
-                      className="text-gray-700 prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: p.description }}
-                    />
-                  </motion.div>
-                ))
-            )}
+            {upfrontProjects.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="p-4 bg-white"
+              >
+                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                  {p.title}{" "}
+                  <span className="text-gray-500">({p.year})</span>
+                </h3>
+                <div
+                  className="text-gray-700 prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: p.description }}
+                />
+              </motion.div>
+            ))}
           </div>
         </div>
       </motion.div>
@@ -438,7 +457,7 @@ export default function Home() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="pl-4 space-y-4 mt-2 origin-top"
                       >
-                        {data[cat].projects.map((item) => (
+                        {Array.from(new Map(data[cat].projects.map(item => [item.id, item])).values()).map((item) => (
                           <li key={item.id}>
                             <motion.button
                               onClick={() => selectProject(item.id)}
