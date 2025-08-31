@@ -267,7 +267,7 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-col items-center md:items-left mr-0 md:mr-75 print:w-full print:m-0"
+        className="flex flex-col items-left md:items-left mr-0 md:mr-75 print:w-full print:m-0"
       >
         <motion.button
           onClick={() => window.print()}
@@ -278,7 +278,7 @@ export default function Home() {
         >
           Print Portfolio
         </motion.button>
-        <h2 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-800">
+        <h2 className="text-3xl sm:text-4xl text-center font-bold mb-2 text-gray-800">
           {profile?.name || "null null"}
         </h2>
         <div className="text-left grid grid-cols-1 lg:grid-cols-3 w-full">
