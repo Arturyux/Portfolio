@@ -203,7 +203,7 @@ export default function Home() {
 
       if (queueA > 0 && queueB > 0) {
         if (queueA !== queueB) {
-          return queueB - queueA;
+          return queueA - queueB;
         }
       }
 
@@ -282,7 +282,7 @@ export default function Home() {
           {profile?.name || "null null"}
         </h2>
         <div className="text-left grid grid-cols-1 lg:grid-cols-3 w-full">
-            <div className="lg:text-left text-center order-2 lg:order-1 lg:mt-2 mt-0 lg:col-span-2 lg:p-7 p-4 print:p-2 print:ml-2 print:order-0">
+            <div className="lg:text-left text-center order-2 lg:order-1 lg:mt-2 mt-0 lg:col-span-2 lg:p-7 p-4 print:p-2 print:ml-2 print:order-0 print:text-left">
                 <p className="text-black text-xl sm:text-2xl font-semibold mb-2">
                     {profile?.bioshort || "null"}
                 </p>

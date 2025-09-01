@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   const type = req.nextUrl.searchParams.get("type");
+
   const body = await req.json();
   const data = readData();
 
@@ -103,43 +104,54 @@ export async function PUT(req: NextRequest) {
     }
     writeData(data);
     return NextResponse.json({ success: true });
-  }
-
-  if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  }
-  
-  const { title, description, year, upfront, queuenumber } = body;
-
-  let originalCategory = "";
-  let itemIndex = -1;
-
-  for (const cat in data) {
-    const index = data[cat].projects.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      originalCategory = cat;
-      itemIndex = index;
-      break;
+  } else {
+    if (!id) {
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
     }
+    const { category, title, description, year, upfront = false, queuenumber = 0 } = body;
+    if (!category || !title || !description || !year) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    let originalCategory = "";
+    let itemIndex = -1;
+
+    for (const cat in data) {
+      const index = data[cat].projects.findIndex((item) => item.id === id);
+      if (index !== -1) {
+        originalCategory = cat;
+        itemIndex = index;
+        break;
+      }
+    }
+
+    if (itemIndex === -1) {
+        return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+    
+    const updatedItem = { 
+        ...data[originalCategory].projects[itemIndex], 
+        title, 
+        description, 
+        year, 
+        upfront, 
+        queuenumber: Number(queuenumber) 
+    };
+
+    if (originalCategory === category) {
+      data[originalCategory].projects[itemIndex] = updatedItem;
+    } else {
+      data[originalCategory].projects.splice(itemIndex, 1);
+      
+      if (!data[category]) {
+        data[category] = { generalInfo: "", projects: [] };
+      }
+      data[category].projects.push(updatedItem);
+    }
+    
+    writeData(data);
+    return NextResponse.json(updatedItem);
   }
-
-  if (itemIndex === -1) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
-  }
-
-  const updatedItem = {
-    ...data[originalCategory].projects[itemIndex],
-    title,
-    description,
-    year,
-    upfront,
-    queuenumber: Number(queuenumber ?? 0),
-  };
-
-  data[originalCategory].projects[itemIndex] = updatedItem;
-
-  writeData(data);
-  return NextResponse.json(updatedItem);
 }
 
 export async function DELETE(req: NextRequest) {
