@@ -412,7 +412,7 @@ export default function Home() {
                           .sort((a, b) => {
                             const yearA = parseInt(a.year.split('-')[0], 10);
                             const yearB = parseInt(b.year.split('-')[0], 10);
-                            return yearA - yearB;
+                            return yearB - yearA;
                           })
                           .map((item) => (
                           <li key={item.id}>
