@@ -338,6 +338,45 @@ export default function Home() {
               ))}
           </div>
         </div>
+        <div className="hidden print:grid grid-cols-2 w-full border-t border-gray-300 my-4">
+              <div className="col-start-1 m-5">
+              {profile?.email && (
+                <a
+                  href={`mailto:${profile.email}`}
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                  {profile.email}
+                </a>
+              )}
+              {profile?.phone && (
+                <a
+                  href={`tel:${profile.phone}`}
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon icon={faPhone} className="mr-2" />
+                  {profile.phone}
+                </a>
+              )}
+              </div>
+              <div className="col-start-2 m-5">
+                {profile?.socials?.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-800 hover:text-blue-600 text-base md:text-lg print:hidden"
+                >
+                  <FontAwesomeIcon
+                    icon={getSocialIcon(social.platform)}
+                    className="mr-2"
+                  />
+                  {social.url.replace('https://', '')}
+                </a>
+              ))}
+              </div>
+        </div>
         <SkillDisplay
           programming={profile?.programming || {}}
           showProgramming={true}
