@@ -408,7 +408,13 @@ export default function Home() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="pl-4 space-y-4 mt-2 origin-top"
                       >
-                        {Array.from(new Map(data[cat].projects.map(item => [item.id, item])).values()).map((item) => (
+                        {Array.from(new Map(data[cat].projects.map(item => [item.id, item])).values())
+                          .sort((a, b) => {
+                            const yearA = parseInt(a.year.split('-')[0], 10);
+                            const yearB = parseInt(b.year.split('-')[0], 10);
+                            return yearA - yearB;
+                          })
+                          .map((item) => (
                           <li key={item.id}>
                             <motion.button
                               onClick={() => selectProject(item.id)}
